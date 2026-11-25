@@ -8,6 +8,10 @@ def main(argv=None):
     s = sub.add_parser("simulate", help="Pipeline check on synthetic series"); s.add_argument("--out", default="results/simulate")
     d = sub.add_parser("download", help="Download + clean the real series (needs internet)")
     d.add_argument("--out", default="data"); d.add_argument("--only", nargs="*", help="series names, default all")
+    b = sub.add_parser("batch", help="Run every series found in --data (from `forecastclean download`)")
+    b.add_argument("--data", default="data/raw"); b.add_argument("--out", default="results/batch")
+    b.add_argument("--only", nargs="*"); b.add_argument("--chronos"); b.add_argument("--cutoff")
+    b.add_argument("--max-context", type=int, default=1024); b.add_argument("--max-origins", type=int, default=60)
     r = sub.add_parser("run", help="Evaluate on YOUR csv (columns: date,value)")
     r.add_argument("--csv", required=True); r.add_argument("--date-col", default="date"); r.add_argument("--value-col", default="value")
     r.add_argument("--h", type=int, default=12); r.add_argument("--season", type=int, default=1)
@@ -16,6 +20,9 @@ def main(argv=None):
     r.add_argument("--returns", action="store_true", help="forecast log-returns instead of levels")
     r.add_argument("--out", default="results/run")
     args = p.parse_args(argv)
+    if args.cmd == "batch":
+        from .batch import run_batch
+        return run_batch(args)
     if args.cmd == "download":
         from .data import download_all
         return download_all(args.out, args.only)

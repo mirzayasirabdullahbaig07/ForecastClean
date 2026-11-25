@@ -45,3 +45,28 @@ def test_wiki_clean():
 
 def test_series_registry_consistent():
     assert all(f in "MDHB" and s >= 1 for f, s, _ in SERIES.values()) and len(SERIES) == 9
+
+
+def test_evaluate_caps_and_thins_without_lookahead():
+    from forecastclean.evaluate import evaluate
+    from forecastclean.models import naive
+    from forecastclean.synthetic import seasonal_series
+    s = seasonal_series(240); lens = []
+    def spy(train, h, season): lens.append(len(train)); return naive(train, h)
+    res = evaluate(s, {"spy": spy}, h=12, season=12, max_context=50, max_origins=4)
+    assert max(lens) <= 50 and res.origin.nunique() == 4
+    assert (res.target_start > s.index[res.origin - 1]).all()
+
+
+def test_holm_matches_hand_example():
+    from forecastclean.stability import holm
+    assert np.allclose(holm([0.01, 0.04, 0.03]), [0.03, 0.06, 0.06])
+
+
+def test_ranking_stability_high_for_clear_winner_low_for_ties():
+    from forecastclean.stability import _stab
+    rng = np.random.default_rng(0)
+    clear = pd.DataFrame({"a": rng.normal(1, .1, 80), "b": rng.normal(2, .1, 80), "c": rng.normal(3, .1, 80)})
+    tie = pd.DataFrame({k: rng.normal(1, .5, 30) for k in "abc"})
+    assert _stab(clear, 200, 0)["mean_tau"] > 0.95 and _stab(clear, 200, 0)["p_best_same"] > 0.95
+    assert _stab(tie, 200, 0)["p_best_same"] < 0.8

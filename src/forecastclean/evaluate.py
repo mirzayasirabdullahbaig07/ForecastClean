@@ -31,14 +31,19 @@ def rolling_origins(n, initial, h, step):
 
 
 def evaluate(series: pd.Series, forecasters: dict, h=12, initial=None, step=None, season=1,
-             min_train=30) -> pd.DataFrame:
+             min_train=30, max_context=None, max_origins=None) -> pd.DataFrame:
     """Return long table: origin_idx, origin_date, target_start, target_end, model, mase, abs_err_h (vector mean)."""
     y = series.to_numpy(float); idx = series.index
     initial = initial or max(min_train, len(y) // 2); step = step or h
     rows, errs = [], {}
-    for t in rolling_origins(len(y), initial, h, step):
-        ctx, tgt = y[:t], y[t:t + h]
-        assert len(ctx) == t and idx[t - 1] < idx[t]          # no look-ahead by construction
+    origins = list(rolling_origins(len(y), initial, h, step))
+    if max_origins and len(origins) > max_origins:           # evenly thinned origins (speed on long series)
+        keep = np.unique(np.linspace(0, len(origins) - 1, max_origins).round().astype(int))
+        origins = [origins[i] for i in keep]
+    for t in origins:
+        lo = max(0, t - max_context) if max_context else 0   # optional context cap (still only past data)
+        ctx, tgt = y[lo:t], y[t:t + h]
+        assert len(ctx) == t - lo and idx[t - 1] < idx[t]     # no look-ahead by construction
         for name, f in forecasters.items():
             pred = np.asarray(f(ctx, h, season), float)
             rows.append(dict(origin=t, target_start=idx[t], target_end=idx[t + h - 1], model=name,
