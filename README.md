@@ -7,21 +7,21 @@ Repo: https://github.com/mirzayasirabdullahbaig07/ForecastClean · Local: `C:\Us
 
 ## 📊 Project progress — where we are right now
 
-**Overall: 40% ▓▓▓▓▓▓▓▓░░░░░░░░░░░░ (target: research-paper preprint)**
-_Last updated: 2026-11-25 · Current phases: **Phase 2 — Literature** (notes: [`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** (sources: [`DATA_SOURCES.md`](DATA_SOURCES.md)) and **Phase 4 — real-data pipeline**_
+**Overall: 48% ▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░ (target: research-paper preprint)**
+_Last updated: 2026-11-25 · Current phases: **Phase 5 — main experiments** (first Chronos results logged in [`EXPERIMENT_LOG.md`](EXPERIMENT_LOG.md)), plus **Phase 2 — Literature** ([`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** ([`DATA_SOURCES.md`](DATA_SOURCES.md)) to finish_
 
 | # | Phase | Weight | Done | Contribution | Status |
 |---|---|---:|---:|---:|---|
 | 1 | Framework + tests (rolling origin, MASE, DM test, 5 baselines, CLI) | 15% | 100% | 15% | ✅ Done (6/6 tests pass, `simulate` runs) |
 | 2 | Literature review + gap statement | 10% | 80% | 8% | 🔄 **Nearly done** — closest competitor (2609.10357) analysed; new gap **A′** (rolling origins after release dates + horizon sweep) in `LITERATURE.md` §5; release dates found (`LITERATURE.md` §6); you still read the 2 key papers + confirm dates at the model cards |
 | 3 | Choose 6–10 real series (source + licence recorded) | 10% | 70% | 7% | 🔄 **Mostly done** — all 9 series downloaded (2026-11-25) and manifest saved; **licences still to confirm**; macro series end 2025 (see agenda) |
-| 4 | Real-data pipeline + Chronos adapter tested | 10% | 55% | 5.5% | 🔄 **In progress** — classical baselines run on 9 real series; Chronos adapter fixed against the library source + stand-in tests + Colab notebook `notebooks/chronos_colab.ipynb`; **real Chronos run still to do (you, on Colab)** |
-| 5 | Main experiments (all models × series × horizons) | 20% | 10% | 2% | 🔄 **Started** — classical models only: post-release (after 2025-10-31) rolling windows + horizon sweep done in sandbox on your data (see log); foundation models still missing |
-| 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 25% | 2.5% | 🔄 Code ready (`--release-cutoff --post-only --horizon-sweep`: bootstrap ranking stability, Kendall tau across horizons, Holm); needs foundation-model results for the actual gap |
+| 4 | Real-data pipeline + Chronos adapter tested | 10% | 85% | 8.5% | ✅ **Mostly done** — Chronos-Bolt (tiny, small) and Chronos-2 run on real weights on Colab (2026-11-25); two adapter/scoring bugs found and fixed on the way (Chronos-2 needs 3-d input; relative MASE was `inf` at h=1). **Left:** TimesFM adapter, tuned classical baselines (statsforecast) |
+| 5 | Main experiments (all models × series × horizons) | 20% | 30% | 6% | 🔄 **Started** — first post-release run with Chronos-Bolt-small + Chronos-2 + 7 classical models on 6 series × 4 horizons (see log, **preliminary**). Still missing: the 3 macro series (data ends before the cutoff), tuned baselines, more models, the pre-release comparison |
+| 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 40% | 4% | 🔄 RQ3 machinery now runs on real foundation-model results (bootstrap stability, Kendall tau across horizons). **RQ2 gap still needs the same models on pre-release windows** |
 | 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 0% | 0% | ⬜ Not started |
 | 8 | Paper writing (8 sections) | 15% | 0% | 0% | ⬜ Not started |
 | 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 0% | 0% | ⬜ Not started |
-| | **Total** | **100%** | | **40%** | |
+| | **Total** | **100%** | | **48.5% (shown as 48%)** | |
 
 Overall % = sum of (weight × done). Update the "Done" column when a phase moves, then recompute.
 
@@ -30,17 +30,18 @@ Overall % = sum of (weight × done). Update the "Done" column when a phase moves
 2. ~~Get the data (Phase 3)~~ ✅ downloaded 2026-11-25 (9 series, `data/MANIFEST.csv`). Licences in `DATA_SOURCES.md` still to confirm.
 3. **Re-run the batch after the design fixes (Phase 4):** `forecastclean batch` (≈7 min). Then plot 3–4 series by eye and check the forecasts look sane.
 4. **Fix the macro data end-date (Phase 3):** FRED-MD `current.csv` ended at 2025-08/09 although downloaded in Nov 2026. Open the St. Louis Fed FRED-MD page, find the newest monthly vintage file, then `forecastclean download --only fredmd_UNRATE fredmd_CPIAUCSL fredmd_INDPRO --fred-vintage <YYYY-MM>`.
-5. **Run Chronos on Colab (Phase 4):** open `notebooks/chronos_colab.ipynb`, run cells 1–3 (smoke test), then 4–5. Send me any error. **Heads-up:** Chronos's training cutoff is not published (see `EXPERIMENT_LOG.md`), so we will use each model's **release date** as a conservative cutoff (verify dates first).
-6. **Then** the full experiment grid (Phase 5) — needs each model's documented cutoff first.
+5. ~~Run Chronos on Colab (Phase 4)~~ ✅ done 2026-11-25 (post-release run). Chronos's training cutoff is not published, so we use each model's **release date** as a conservative cutoff (verify dates first).
+6. **Next (Phase 5/6):** (a) run the same models on the **pre-release** windows (Colab cell 4) so RQ2 — the contamination gap — can be computed; (b) add **tuned** classical baselines (statsforecast AutoARIMA/AutoETS), since untuned ARIMA/ETS is the first thing a reviewer will attack; (c) save the Colab `results.zip` into this folder so the numbers are reproducible from the repo.
 
 ### 🚦 Go / no-go gates
 - End of Phase 4: no foundation model runs at all → fall back to an all-classical + deep-baseline study of *evaluation-protocol sensitivity*.
 - End of Phase 6: no contamination gap anywhere → report it as a null result with CIs.
 
 ### ✅ Honest status of what is verified
-- Verified (19 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
-- **Preliminary only:** classical-baseline results on 9 real series exist (see `EXPERIMENT_LOG.md`) but are sanity checks, not findings.
-- **Not verified:** the Chronos adapter with real weights (tested only with stand-in pipelines); any foundation-model result (none exist yet); licences of the data sources.
+- Verified (21 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
+- Verified on real weights (Colab, 2026-11-25): the Chronos adapter for Bolt-tiny, Bolt-small and Chronos-2.
+- **Preliminary only:** the first foundation-model results (6 series, ≤50 origins each, untuned ARIMA/ETS, release-date cutoffs not published training cutoffs). Not findings yet.
+- **Not verified:** release dates at the primary model cards; licences of the data sources; any pre-release / contamination-gap result.
 
 ---
 
