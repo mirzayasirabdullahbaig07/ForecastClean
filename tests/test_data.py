@@ -82,3 +82,29 @@ def test_eval_start_and_new_baselines():
     f = comb(s.to_numpy(), 12, 12)
     assert f.shape == (12,) and np.isfinite(f).all()
     assert np.isfinite(theta(s.to_numpy(), 12, 1)).all()
+
+
+def _fake_torch(monkeypatch):
+    import sys, types
+    t = types.SimpleNamespace(tensor=lambda x, dtype=None: np.asarray(x, float), float32=None,
+                              cuda=types.SimpleNamespace(is_available=lambda: False))
+    monkeypatch.setitem(sys.modules, "torch", t)
+
+
+def test_chronos_adapter_handles_bolt_and_chronos2_output_shapes(monkeypatch):
+    _fake_torch(monkeypatch)
+    from forecastclean.models import chronos_forecaster
+    seen = {}
+    class Bolt:                                        # returns one tensor [batch, h, Q]
+        def predict_quantiles(self, x, prediction_length, quantile_levels):
+            seen["len"] = len(x); h = prediction_length
+            return np.arange(h, dtype=float).reshape(1, h, 1) + 5, None
+    class Chronos2:                                    # returns a LIST of [variates, h, Q]
+        def predict_quantiles(self, x, prediction_length, quantile_levels):
+            h = prediction_length
+            return [np.arange(h, dtype=float).reshape(1, h, 1) + 7], [None]
+    tr = np.arange(50.0)
+    f1 = chronos_forecaster("amazon/chronos-bolt-tiny", pipeline=Bolt()); f2 = chronos_forecaster("amazon/chronos-2", pipeline=Chronos2())
+    assert f1(tr, 6).tolist() == [5, 6, 7, 8, 9, 10] and seen["len"] == 50      # context passed unchanged, no look-ahead
+    assert f2(tr, 4).tolist() == [7, 8, 9, 10]
+    assert f1.__name__ == "chronos-bolt-tiny" and f2.__name__ == "chronos-2"

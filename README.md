@@ -7,7 +7,7 @@ Repo: https://github.com/mirzayasirabdullahbaig07/ForecastClean · Local: `C:\Us
 
 ## 📊 Project progress — where we are right now
 
-**Overall: 32% ▓▓▓▓▓▓░░░░░░░░░░░░░░ (target: research-paper preprint)**
+**Overall: 33% ▓▓▓▓▓▓░░░░░░░░░░░░░░ (target: research-paper preprint)**
 _Last updated: 2026-11-25 · Current phases: **Phase 2 — Literature** (notes: [`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** (sources: [`DATA_SOURCES.md`](DATA_SOURCES.md)) and **Phase 4 — real-data pipeline**_
 
 | # | Phase | Weight | Done | Contribution | Status |
@@ -15,22 +15,22 @@ _Last updated: 2026-11-25 · Current phases: **Phase 2 — Literature** (notes: 
 | 1 | Framework + tests (rolling origin, MASE, DM test, 5 baselines, CLI) | 15% | 100% | 15% | ✅ Done (6/6 tests pass, `simulate` runs) |
 | 2 | Literature review + gap statement | 10% | 40% | 4% | 🔄 **In progress** — arXiv IDs verified, gap options A/B/C written; full reading of 2510.13654 + 2609.10357 and final gap choice pending |
 | 3 | Choose 6–10 real series (source + licence recorded) | 10% | 70% | 7% | 🔄 **Mostly done** — all 9 series downloaded (2026-11-25) and manifest saved; **licences still to confirm**; macro series end 2025 (see agenda) |
-| 4 | Real-data pipeline + Chronos adapter tested | 10% | 50% | 5% | 🔄 **In progress** — `forecastclean batch` ran on all 9 real series; baselines fixed (seasonality, reference, +Theta, +Comb); **Chronos adapter still untested** |
+| 4 | Real-data pipeline + Chronos adapter tested | 10% | 55% | 5.5% | 🔄 **In progress** — classical baselines run on 9 real series; Chronos adapter fixed against the library source + stand-in tests + Colab notebook `notebooks/chronos_colab.ipynb`; **real Chronos run still to do (you, on Colab)** |
 | 5 | Main experiments (all models × series × horizons) | 20% | 0% | 0% | ⬜ Not started |
 | 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 15% | 1.5% | 🔄 Code ready (bootstrap ranking stability, Holm correction, pre/post split); needs real results + CIs for the gap |
 | 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 0% | 0% | ⬜ Not started |
 | 8 | Paper writing (8 sections) | 15% | 0% | 0% | ⬜ Not started |
 | 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 0% | 0% | ⬜ Not started |
-| | **Total** | **100%** | | **32%** | |
+| | **Total** | **100%** | | **33%** | |
 
 Overall % = sum of (weight × done). Update the "Done" column when a phase moves, then recompute.
 
 ### 🎯 Agenda — what we do next (in order)
 1. **Literature (Phase 2, in progress):** arXiv IDs verified. Still to do: read Meyer et al. (2510.13654) and the closest competitor *"A Later Test Set Is Not a New Domain"* (2609.10357) in full, then confirm gap statement A/B/C in `LITERATURE.md` (working assumption: **A**, ranking stability + protocol). **Novelty warning:** post-cutoff evaluation is already crowded.
-2. **Get the data (Phase 3, your PC):** `pip install -e ".[dev]"` → `python -m pytest -q` → `forecastclean download`; send me the output/errors (the download code could not be tested without internet). Then confirm each licence in `DATA_SOURCES.md`.
+2. ~~Get the data (Phase 3)~~ ✅ downloaded 2026-11-25 (9 series, `data/MANIFEST.csv`). Licences in `DATA_SOURCES.md` still to confirm.
 3. **Re-run the batch after the design fixes (Phase 4):** `forecastclean batch` (≈7 min). Then plot 3–4 series by eye and check the forecasts look sane.
 4. **Fix the macro data end-date (Phase 3):** FRED-MD `current.csv` ended at 2025-08/09 although downloaded in Nov 2026. Open the St. Louis Fed FRED-MD page, find the newest monthly vintage file, then `forecastclean download --only fredmd_UNRATE fredmd_CPIAUCSL fredmd_INDPRO --fred-vintage <YYYY-MM>`.
-5. **Test Chronos (Phase 4):** run `amazon/chronos-bolt-tiny` on Colab/Kaggle (free GPU) or laptop CPU; record its documented training cutoff with a link.
+5. **Run Chronos on Colab (Phase 4):** open `notebooks/chronos_colab.ipynb`, run cells 1–3 (smoke test), then 4–5. Send me any error. **Heads-up:** Chronos's training cutoff is not published (see `EXPERIMENT_LOG.md`), so the date-based RQ2 split needs a rethink — decide with me after the run.
 6. **Then** the full experiment grid (Phase 5) — needs each model's documented cutoff first.
 
 ### 🚦 Go / no-go gates
@@ -38,9 +38,9 @@ Overall % = sum of (weight × done). Update the "Done" column when a phase moves
 - End of Phase 6: no contamination gap anywhere → report it as a null result with CIs.
 
 ### ✅ Honest status of what is verified
-- Verified (16 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
+- Verified (17 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
 - **Preliminary only:** classical-baseline results on 9 real series exist (see `EXPERIMENT_LOG.md`) but are sanity checks, not findings.
-- **Not verified:** the Chronos adapter; any foundation-model result (none exist yet); licences of the data sources.
+- **Not verified:** the Chronos adapter with real weights (tested only with stand-in pipelines); any foundation-model result (none exist yet); licences of the data sources.
 
 ---
 
@@ -67,7 +67,7 @@ It extends your time-series coursework (ARIMA on S&P 500) into a research questi
 
 ## 4. Quick start
 ```bash
-pip install -e ".[dev]" && python -m pytest -q     # 16 tests
+pip install -e ".[dev]" && python -m pytest -q     # 17 tests
 forecastclean download                               # fetch + clean real series -> data/raw/*.csv, data/MANIFEST.csv
 forecastclean batch                                  # all series in data/raw -> results/batch/
 forecastclean run --csv data/raw/fredmd_UNRATE.csv --date-col date --value-col value --h 12 --season 12 --out results/unrate

@@ -20,9 +20,9 @@ def run_batch(args) -> int:
     if not names:
         print(f"No series found in {data}. Run `forecastclean download` first."); return 1
     fc = dict(BASELINES)
-    if args.chronos:
+    for mid in (args.chronos or []):
         from .models import chronos_forecaster
-        fc["chronos"] = chronos_forecaster(args.chronos)
+        fc[mid.split("/")[-1]] = chronos_forecaster(mid)
     rows, stab = [], []
     for n in names:
         freq, season, _ = SERIES[n]

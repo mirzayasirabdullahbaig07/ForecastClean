@@ -65,16 +65,24 @@ def comb(train, h, season=1):
     return np.mean([ets(train, h, season), arima(train, h, season), theta(train, h, season)], axis=0)
 
 
-def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="cpu"):
-    """Adapter (untested here). Returns a forecaster using the median of the predictive distribution."""
+def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="auto", pipeline=None):
+    """Adapter for Chronos-Bolt / Chronos-2 (median forecast). Written against chronos-forecasting 2.3.2's source:
+    BaseChronosPipeline.from_pretrained picks the right pipeline class, and predict_quantiles(inputs, prediction_length,
+    quantile_levels) returns a tensor [batch,h,Q] (Bolt) or a LIST of tensors [variates,h,Q] (Chronos-2).
+    The adapter itself is unit-tested with stand-in pipelines only; the real weights have NOT been run yet.
+    `pipeline` lets tests inject a fake."""
     import torch
-    from chronos import BaseChronosPipeline
-    pipe = BaseChronosPipeline.from_pretrained(model_id, device_map=device, torch_dtype=torch.float32)
+    if pipeline is None:
+        from chronos import BaseChronosPipeline
+        dev = ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
+        pipeline = BaseChronosPipeline.from_pretrained(model_id, device_map=dev)
 
     def f(train, h, season=1):
-        q, mean = pipe.predict_quantiles(context=torch.tensor(train, dtype=torch.float32),
-                                         prediction_length=h, quantile_levels=[0.5])
-        return q[0, :, 0].numpy()
+        x = torch.tensor(np.asarray(train, dtype=np.float32), dtype=torch.float32)
+        q, _ = pipeline.predict_quantiles(x, prediction_length=h, quantile_levels=[0.5])   # positional input: version-proof
+        first = q[0]                                                                       # first (only) series
+        arr = np.asarray(first.detach().cpu().numpy() if hasattr(first, "detach") else first, dtype=float)
+        return arr.reshape(-1, arr.shape[-2], arr.shape[-1])[0, :, 0]                      # first variate, h steps, median
     f.__name__ = model_id.split("/")[-1]
     return f
 

@@ -10,7 +10,7 @@ def main(argv=None):
     d.add_argument("--out", default="data"); d.add_argument("--fred-vintage", help="e.g. 2026-10 to use that FRED-MD vintage instead of current.csv"); d.add_argument("--only", nargs="*", help="series names, default all")
     b = sub.add_parser("batch", help="Run every series found in --data (from `forecastclean download`)")
     b.add_argument("--data", default="data/raw"); b.add_argument("--out", default="results/batch")
-    b.add_argument("--only", nargs="*"); b.add_argument("--chronos"); b.add_argument("--cutoff")
+    b.add_argument("--only", nargs="*"); b.add_argument("--chronos", nargs="*", help="one or more HF ids, e.g. amazon/chronos-bolt-tiny amazon/chronos-2"); b.add_argument("--cutoff")
     b.add_argument("--max-context", type=int, default=1024); b.add_argument("--max-origins", type=int, default=150)
     b.add_argument("--eval-start", default="2015-01-01", help="only score windows whose target starts on/after this date")
     r = sub.add_parser("run", help="Evaluate on YOUR csv (columns: date,value)")
