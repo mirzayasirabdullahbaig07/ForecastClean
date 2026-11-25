@@ -17,6 +17,10 @@ def main(argv=None):
     b.add_argument("--horizon-sweep", action="store_true", help="evaluate several horizons per series")
     b.add_argument("--max-context", type=int, default=1024); b.add_argument("--max-origins", type=int, default=150)
     b.add_argument("--eval-start", default="2015-01-01", help="only score windows whose target starts on/after this date")
+    g = sub.add_parser("gap", help="RQ2 contamination gap: pre- vs post-release skill, Chronos vs classical (difference-in-differences)")
+    g.add_argument("--data", default="data/raw"); g.add_argument("--out", default="results/gap"); g.add_argument("--only", nargs="*")
+    g.add_argument("--chronos", nargs="+", required=True); g.add_argument("--max-context", type=int, default=1024)
+    g.add_argument("--max-origins", type=int, default=60); g.add_argument("--eval-start", default="2015-01-01")
     r = sub.add_parser("run", help="Evaluate on YOUR csv (columns: date,value)")
     r.add_argument("--csv", required=True); r.add_argument("--date-col", default="date"); r.add_argument("--value-col", default="value")
     r.add_argument("--h", type=int, default=12); r.add_argument("--season", type=int, default=1)
@@ -28,6 +32,9 @@ def main(argv=None):
     if args.cmd == "batch":
         from .batch import run_batch
         return run_batch(args)
+    if args.cmd == "gap":
+        from .gap import run_gap
+        return run_gap(args)
     if args.cmd == "download":
         from .data import download_all
         return download_all(args.out, args.only, args.fred_vintage)

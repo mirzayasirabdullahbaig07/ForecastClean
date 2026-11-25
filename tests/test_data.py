@@ -168,3 +168,35 @@ def test_relative_mase_finite_when_reference_is_exact_at_some_origins():
             rows.append(dict(origin=o, target_start=o, target_end=o, model=m, mase=v))
     t = skill_table(pd.DataFrame(rows), reference="naive").set_index("model")
     assert np.isfinite(t.loc["ets", "rel_mase"]) and abs(t.loc["ets", "rel_mase"] - 0.5 / 0.2) < 1e-9
+
+
+def test_evaluate_eval_end_keeps_only_windows_ending_before_it():
+    from forecastclean.evaluate import evaluate
+    from forecastclean.models import naive
+    idx = pd.date_range("2020-01-01", periods=200, freq="D"); s = pd.Series(np.arange(200.0), index=idx)
+    r = evaluate(s, {"naive": naive}, h=5, season=1, eval_start="2020-02-01", eval_end="2020-04-01")
+    assert len(r) > 0 and r.target_end.max() <= pd.Timestamp("2020-04-01") and r.target_start.min() >= pd.Timestamp("2020-02-01")
+
+
+def test_gap_did_detects_a_model_that_is_only_good_before_release():
+    """A fake 'pretrained' model that is seasonal-naive-good only on early context (pre-release) must show DiD > 0;
+    a model that is equally good before and after must show DiD ~ 0 (classical models absorb the shared shift)."""
+    from forecastclean.gap import gap_for_series
+    from forecastclean.models import naive
+    from forecastclean.models import seasonal_naive
+    from forecastclean.synthetic import seasonal_series
+    ser = seasonal_series(n=1000, season=7, seed=1); ser.index = pd.date_range("2018-01-01", periods=len(ser), freq="D")
+    rel = ser.index[600].strftime("%Y-%m-%d")
+    leaky = lambda tr, h, season=1: seasonal_naive(tr, h, season) if len(tr) < 600 else naive(tr, h, season)
+    honest = lambda tr, h, season=1: seasonal_naive(tr, h, season)
+    _, a = gap_for_series(ser, 7, 7, "leaky", leaky, rel, max_origins=15, max_context=None, eval_start="2018-04-01", min_windows=3)
+    _, b = gap_for_series(ser, 7, 7, "honest", honest, rel, max_origins=15, max_context=None, eval_start="2018-04-01", min_windows=3)
+    assert a["did"] > 0.2 and abs(b["did"]) < a["did"]
+
+
+def test_gap_skips_series_with_too_few_post_windows():
+    from forecastclean.gap import gap_for_series
+    from forecastclean.models import naive
+    idx = pd.date_range("2020-01-01", periods=120, freq="D"); s = pd.Series(np.random.default_rng(0).normal(size=120).cumsum() + 50, index=idx)
+    rows, why = gap_for_series(s, 1, 5, "m", naive, "2020-04-25", max_origins=10, max_context=None, eval_start="2020-02-01")
+    assert rows is None and "post windows" in why

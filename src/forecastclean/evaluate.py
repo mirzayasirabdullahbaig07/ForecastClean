@@ -31,7 +31,7 @@ def rolling_origins(n, initial, h, step):
 
 
 def evaluate(series: pd.Series, forecasters: dict, h=12, initial=None, step=None, season=1,
-             min_train=30, max_context=None, max_origins=None, eval_start=None) -> pd.DataFrame:
+             min_train=30, max_context=None, max_origins=None, eval_start=None, eval_end=None) -> pd.DataFrame:
     """Return long table: origin_idx, origin_date, target_start, target_end, model, mase, abs_err_h (vector mean)."""
     y = series.to_numpy(float); idx = series.index
     initial = initial or max(min_train, len(y) // 2); step = step or h
@@ -40,6 +40,8 @@ def evaluate(series: pd.Series, forecasters: dict, h=12, initial=None, step=None
         initial = max(min_train, first)
     rows, errs = [], {}
     origins = list(rolling_origins(len(y), initial, h, step))
+    if eval_end is not None:                                 # keep only windows whose TARGET ends on/before eval_end
+        end = pd.Timestamp(eval_end); origins = [t for t in origins if idx[t + h - 1] <= end]
     if max_origins and len(origins) > max_origins:           # evenly thinned origins (speed on long series)
         keep = np.unique(np.linspace(0, len(origins) - 1, max_origins).round().astype(int))
         origins = [origins[i] for i in keep]
