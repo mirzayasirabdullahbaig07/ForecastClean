@@ -43,6 +43,20 @@ SERIES = {
     "wiki_Christmas": ("D", 7, "en.wikipedia pageviews: Christmas"),
 }
 
+# More series (added 2026-11-25) so the contamination interval rests on ~25 series, not 6. ECB publishes these euro
+# reference rates daily; Wikipedia pages are chosen to mix strong seasonality, event spikes, trends and flat interest.
+ECB_EXTRA = ["JPY", "CHF", "CAD", "AUD", "SEK", "NOK", "CNY", "INR"]
+WIKI_ARTICLES = {
+    "Python": "Python_(programming_language)", "Christmas": "Christmas", "Easter": "Easter", "Halloween": "Halloween",
+    "Thanksgiving": "Thanksgiving", "Wimbledon": "Wimbledon_Championships", "SuperBowl": "Super_Bowl",
+    "Bitcoin": "Bitcoin", "Cricket": "Cricket", "Weather": "Weather", "Ramadan": "Ramadan",
+    "MachineLearning": "Machine_learning", "TaylorSwift": "Taylor_Swift", "Eurovision": "Eurovision_Song_Contest",
+}
+for _c in ECB_EXTRA:
+    SERIES[f"ecb_EUR{_c}"] = ("B", 1, f"EUR/{_c} ECB reference rate, daily")
+for _k, _a in WIKI_ARTICLES.items():
+    SERIES.setdefault(f"wiki_{_k}", ("D", 7, f"en.wikipedia pageviews: {_a}"))
+
 
 # ---------- pure cleaning functions (unit-tested) ----------
 def clean_fred_md(raw: pd.DataFrame, column: str) -> pd.DataFrame:
@@ -126,7 +140,7 @@ def fetch(name: str, fred_vintage: str | None = None) -> tuple[pd.DataFrame, str
     if kind == "neso":
         return clean_neso(_neso_raw(), SERIES[name][0]), NESO_API + "package_show?id=" + NESO_PACKAGE_ID
     if kind == "wiki":
-        article = {"Python": "Python_(programming_language)", "Christmas": "Christmas"}[key]
+        article = WIKI_ARTICLES[key]
         end = datetime.now(timezone.utc).strftime("%Y%m%d")
         url = WIKI_URL.format(article=urllib.parse.quote(article, safe="()_"), start="20150701", end=end)
         return clean_wiki(json.loads(_get(url))["items"]), url

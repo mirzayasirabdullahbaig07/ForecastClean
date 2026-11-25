@@ -44,7 +44,7 @@ def test_wiki_clean():
 
 
 def test_series_registry_consistent():
-    assert all(f in "MDHB" and s >= 1 for f, s, _ in SERIES.values()) and len(SERIES) == 9
+    assert all(f in "MDHB" and s >= 1 for f, s, _ in SERIES.values()) and len(SERIES) == 29
 
 
 def test_evaluate_caps_and_thins_without_lookahead():
@@ -200,3 +200,15 @@ def test_gap_skips_series_with_too_few_post_windows():
     idx = pd.date_range("2020-01-01", periods=120, freq="D"); s = pd.Series(np.random.default_rng(0).normal(size=120).cumsum() + 50, index=idx)
     rows, why = gap_for_series(s, 1, 5, "m", naive, "2020-04-25", max_origins=10, max_context=None, eval_start="2020-02-01")
     assert rows is None and "post windows" in why
+
+
+def test_every_series_has_a_fetch_route_and_sane_metadata():
+    from forecastclean.data import SERIES, WIKI_ARTICLES
+    assert len(SERIES) >= 25 and len(set(SERIES)) == len(SERIES)
+    for name, (freq, season, desc) in SERIES.items():
+        kind, _, key = name.partition("_")
+        assert kind in {"fredmd", "ecb", "neso", "wiki"} and freq in {"M", "D", "H", "B"} and season >= 1 and desc
+        if kind == "wiki":
+            assert key in WIKI_ARTICLES
+        if kind == "ecb":
+            assert key.startswith("EUR") and len(key) == 6

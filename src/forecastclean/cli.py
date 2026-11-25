@@ -21,6 +21,7 @@ def main(argv=None):
     g.add_argument("--data", default="data/raw"); g.add_argument("--out", default="results/gap"); g.add_argument("--only", nargs="*")
     g.add_argument("--chronos", nargs="+", required=True); g.add_argument("--max-context", type=int, default=1024)
     g.add_argument("--max-origins", type=int, default=60); g.add_argument("--eval-start", default="2015-01-01")
+    g.add_argument("--drop", nargs="*", help="skip slow classical models, e.g. --drop arima")
     r = sub.add_parser("run", help="Evaluate on YOUR csv (columns: date,value)")
     r.add_argument("--csv", required=True); r.add_argument("--date-col", default="date"); r.add_argument("--value-col", default="value")
     r.add_argument("--h", type=int, default=12); r.add_argument("--season", type=int, default=1)
