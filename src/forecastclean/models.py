@@ -69,7 +69,7 @@ def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="auto", pipel
     """Adapter for Chronos-Bolt / Chronos-2 (median forecast). Written against chronos-forecasting 2.3.2's source:
     BaseChronosPipeline.from_pretrained picks the right pipeline class, and predict_quantiles(inputs, prediction_length,
     quantile_levels) returns a tensor [batch,h,Q] (Bolt) or a LIST of tensors [variates,h,Q] (Chronos-2).
-    The adapter itself is unit-tested with stand-in pipelines only; the real weights have NOT been run yet.
+    Verified on real weights: chronos-bolt-tiny (smoke test, 2025-11-25). Chronos-2 needs 3-d input (handled below).
     `pipeline` lets tests inject a fake."""
     import torch
     if pipeline is None:
@@ -77,9 +77,19 @@ def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="auto", pipel
         dev = ("cuda" if torch.cuda.is_available() else "cpu") if device == "auto" else device
         pipeline = BaseChronosPipeline.from_pretrained(model_id, device_map=dev)
 
+    mode = {"3d": "Chronos2" in type(pipeline).__name__}   # Chronos-2 wants (n_series, n_variates, history); Bolt takes 1-d
+
     def f(train, h, season=1):
         x = torch.tensor(np.asarray(train, dtype=np.float32), dtype=torch.float32)
-        q, _ = pipeline.predict_quantiles(x, prediction_length=h, quantile_levels=[0.5])   # positional input: version-proof
+        if mode["3d"]:
+            x = x.reshape(1, 1, -1)
+        try:
+            q, _ = pipeline.predict_quantiles(x, prediction_length=h, quantile_levels=[0.5])   # positional input: version-proof
+        except ValueError:
+            if mode["3d"]:
+                raise
+            mode["3d"] = True                                  # pipeline rejected 1-d input -> retry once as 3-d, remember it
+            q, _ = pipeline.predict_quantiles(x.reshape(1, 1, -1), prediction_length=h, quantile_levels=[0.5])
         first = q[0]                                                                       # first (only) series
         arr = np.asarray(first.detach().cpu().numpy() if hasattr(first, "detach") else first, dtype=float)
         return arr.reshape(-1, arr.shape[-2], arr.shape[-1])[0, :, 0]                      # first variate, h steps, median

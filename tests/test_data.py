@@ -110,6 +110,28 @@ def test_chronos_adapter_handles_bolt_and_chronos2_output_shapes(monkeypatch):
     assert f1.__name__ == "chronos-bolt-tiny" and f2.__name__ == "chronos-2"
 
 
+def test_chronos_adapter_feeds_3d_input_to_chronos2_style_pipelines(monkeypatch):
+    """Real Chronos-2 raises ValueError on 1-d input (seen on Colab, 2025-11-25); the adapter must send (1, 1, T)."""
+    _fake_torch(monkeypatch)
+    from forecastclean.models import chronos_forecaster
+    shapes = []
+    class Strict3D:                                    # name-agnostic: rejects 1-d like the real pipeline
+        def predict_quantiles(self, x, prediction_length, quantile_levels):
+            shapes.append(np.asarray(x).shape)
+            if np.asarray(x).ndim != 3:
+                raise ValueError("Expected 3-d tensor")
+            return [np.arange(prediction_length, dtype=float).reshape(1, prediction_length, 1)], [None]
+    class Chronos2Pipeline(Strict3D):                  # class name triggers 3-d up front
+        pass
+    tr = np.arange(30.0)
+    assert chronos_forecaster("amazon/chronos-2", pipeline=Chronos2Pipeline())(tr, 3).tolist() == [0, 1, 2]
+    assert shapes == [(1, 1, 30)]
+    shapes.clear()
+    g = chronos_forecaster("x/unknown", pipeline=Strict3D())      # unknown class: falls back after one rejection, then remembers
+    assert g(tr, 3).tolist() == [0, 1, 2] and g(tr, 3).tolist() == [0, 1, 2]
+    assert shapes == [(30,), (1, 1, 30), (1, 1, 30)]
+
+
 def test_registry_global_cutoff_and_unknown_model():
     import pytest
     from forecastclean.registry import clean_from
