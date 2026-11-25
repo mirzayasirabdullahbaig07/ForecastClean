@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "forecastclean"
+version = "0.1.0"
+description = "ForecastClean: leakage-aware rolling-origin evaluation of classical vs foundation forecasters"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26", "scipy>=1.11", "pandas>=2.1", "statsmodels>=0.14"]
+[project.optional-dependencies]
+fm = ["chronos-forecasting", "torch"]
+dev = ["pytest>=8"]
+[project.scripts]
+forecastclean = "forecastclean.cli:main"
+[tool.setuptools.packages.find]
+where = ["src"]
