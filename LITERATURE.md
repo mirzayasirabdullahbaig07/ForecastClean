@@ -1,6 +1,6 @@
 # Literature notes — ForecastClean (Phase 2)
 
-_Status 2026-11-25: **abstract/snippet-level only.** Every entry below was checked against its arXiv page or a search snippet; none has been read in full yet. Before citing in the paper, read the starred papers fully._
+_Status 2026-11-25 (updated later the same day — see §5): **abstract/snippet-level only, plus tool-generated summaries of the two key PDFs.** Every entry below was checked against its arXiv page or a search snippet; none has been read in full yet. Before citing in the paper, read the starred papers fully._
 
 ## 1. Verified papers (IDs confirmed to exist and match their descriptions)
 
@@ -36,3 +36,32 @@ _Status 2026-11-25: **abstract/snippet-level only.** Every entry below was check
 - [ ] Search specifically for prior "ranking stability / Kendall tau" work on TSFM benchmarks.
 - [ ] Record each candidate model's documented cutoff + source link in `EXPERIMENT_LOG.md`.
 - [ ] Pick A, B or C and write a 5-line gap statement.
+
+## 5. Update — closest competitor read (via summaries of the PDFs; verify yourself)
+
+**⭐ Moghadasi & Ghaderi, *A Later Test Set Is Not a New Domain* (arXiv 2609.10357, 9 Sep 2026, BrightMind AI / UT Arlington).**
+- Fixed forecast origin **1 Jan 2026** for everything; 13 models (4 classical, 3 trained per dataset, 6 pretrained: Chronos-Bolt Small/Base, Chronos-2, TimesFM 2.5/3.0, Moirai-2.0 Small); 7 groups incl. **Wikipedia pageviews and ECB daily exchange rates** (same sources as ours), Danish electricity, ERA5, CAMS.
+- Cutoffs: they do **not** tabulate them; they argue a 2026 observation cannot be in a checkpoint published in 2025 (i.e. **release date as a conservative cutoff**).
+- Stats: Friedman + Nemenyi, Holm-corrected Wilcoxon vs the group winner; they deliberately avoid Diebold–Mariano.
+- Findings: pretrained models rank first in 6/7 groups (5 defensible); **all 13 methods tied on exchange rates** (matches our FX result: everything ≈ naive); TimesFM beats Chronos by more on Wikipedia than elsewhere → "corpus familiarity" hypothesis.
+- **Their stated limits = our opening:** *single* forecast origin (rolling origins "would show variance across time"); *no horizon sweep*; five easy-to-download domains.
+
+**Meyer et al. (2510.13654 v3) — what it actually recommends:** (1) test data must be "data that could not plausibly have appeared in any pre-training corpus"; (2) a **strict global post-training test period** — if *t* is the latest pre-training timestamp of any compared model, every test observation must be ≥ *t*+1 (model-aware, not a fixed date). It does **not** prescribe significance tests or ranking-robustness reporting; it cites Roque et al. (2025) that rankings depend heavily on which series are tested.
+
+**Ranking-stability work already exists (so this is NOT a fresh idea in general):**
+Rank Stability measure on M5 (arXiv 2108.03588); fev-bench bootstrap CIs + ranking robustness (2509.26468); TimesX appendix T, ranking vs benchmark size (2607.06973); *Evaluation Choices Decide the Forecasting Leaderboard* (2609.27867); *Cherry-Picking in Time Series Forecasting* (2412.14435); NeurIPS 2026 papers on leaderboard resolution/noise (Vernier; "Most Published Margins Fall Within the Noise") and *Same Models, Different Winners* (financial volatility, 1,044 protocols).
+
+### Revised novelty assessment
+- General "model rankings are unstable" → **crowded**. Post-cutoff hold-out → **crowded**.
+- **Still open (as far as these searches show):** TSFM-vs-classical **rolling-origin windows after release dates** (many post-release origins, not one), with **horizon sweep** and **variance of the ranking across origins** — exactly what 2609.10357 says it cannot estimate. Searches were limited; a careful related-work check is still needed.
+
+### Gap statement A′ (new working choice, replaces A)
+> *Existing contamination-free evaluations of time-series foundation models score a single forecast origin after the model's release. We extend this to **rolling origins strictly after each model's release date** and a **horizon sweep**, and quantify how much the foundation-vs-classical ranking varies across origins, horizons and series, using relative MASE against naive, with paired tests per series and rank tests across series.*
+
+Consequences: (i) **cutoff = model release date** (conservative; verify each date at its source — not done yet); (ii) pre-release windows are "possibly seen", post-release are "certainly clean", so RQ2 becomes pre- vs post-*release*; any gap is a lower bound; (iii) add cross-series Friedman/Nemenyi + Wilcoxon (as in 2609.10357) next to our per-series Diebold–Mariano, which tests a different thing (equal accuracy over time within one series); (iv) our results can be sanity-checked against theirs on FX and Wikipedia.
+
+### Still open for Phase 2
+- [ ] You read 2510.13654 and 2609.10357 yourself (summaries above are tool-generated).
+- [ ] Verify release dates: Chronos-Bolt, Chronos-2, and any added model (e.g. TimesFM) — at the model cards / repos.
+- [ ] A short, careful related-work search specifically for "rolling-origin post-release TSFM evaluation".
+- [ ] Final decision on A′ (you + supervisor).
