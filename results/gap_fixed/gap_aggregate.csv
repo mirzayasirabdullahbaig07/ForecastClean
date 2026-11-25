@@ -1,0 +1,9 @@
+chronos,group,n_series,mean_did,median_did,ci_lo,ci_hi,n_positive
+chronos-2,all,26,-0.0773,-0.0394,-0.1756,0.0197,7
+chronos-2,electricity,2,0.0968,0.0968,-0.1141,0.3078,1
+chronos-2,fx,10,-0.0337,-0.0336,-0.0558,-0.0126,2
+chronos-2,wikipedia,14,-0.1334,-0.072,-0.2999,0.0327,4
+chronos-bolt-small,all,26,-0.1606,-0.031,-0.3469,0.0067,9
+chronos-bolt-small,electricity,2,0.1371,0.1371,0.0627,0.2114,2
+chronos-bolt-small,fx,10,-0.0125,-0.0115,-0.0381,0.0109,4
+chronos-bolt-small,wikipedia,14,-0.309,-0.1775,-0.6137,0.0091,3

@@ -5,3 +5,5 @@ __pycache__/
 results/*
 !results/.gitkeep
 data/raw/
+!results/gap_fixed/
+*.zip
