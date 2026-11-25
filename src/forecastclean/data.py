@@ -15,6 +15,7 @@ import hashlib
 import io
 import json
 import urllib.parse
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -103,10 +104,19 @@ def clean_wiki(items: list[dict]) -> pd.DataFrame:
 
 
 # ---------- network ----------
-def _get(url: str, timeout: int = 120) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+def _get(url: str, timeout: int = 120, retries: int = 4) -> bytes:
+    """GET with back-off on HTTP 429/5xx (Wikimedia rate-limits bursts)."""
+    import time
+    for attempt in range(retries + 1):
+        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 500, 502, 503, 504) or attempt == retries:
+                raise
+            time.sleep(5 * 3 ** attempt)                         # 5, 15, 45, 135 s
+    raise RuntimeError("unreachable")
 
 
 def _neso_raw() -> pd.DataFrame:

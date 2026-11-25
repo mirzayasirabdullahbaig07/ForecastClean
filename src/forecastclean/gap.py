@@ -32,9 +32,12 @@ def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origin
     """Return (rows, summary) or (None, reason). rows: one line per model x period."""
     fc = {k: v for k, v in BASELINES.items() if k not in drop}; fc[chronos_name] = chronos_fc   # drop: skip slow models
     r = pd.Timestamp(release)
-    pre = evaluate(ser, fc, h=h, season=season, max_context=max_context, max_origins=max_origins,
+    # Every window, before and after, must see the SAME context length (min_train = max_context). Otherwise early pre-release
+    # windows (short history) would penalise long-context models and bias the gap (found on the first 22-series run).
+    mt = max_context or 30
+    pre = evaluate(ser, fc, h=h, season=season, max_context=max_context, max_origins=max_origins, min_train=mt,
                    eval_start=eval_start, eval_end=r)
-    post = evaluate(ser, fc, h=h, season=season, max_context=max_context, max_origins=max_origins,
+    post = evaluate(ser, fc, h=h, season=season, max_context=max_context, max_origins=max_origins, min_train=mt,
                     eval_start=r + pd.Timedelta(days=1))
     n_pre = pre.origin.nunique() if len(pre) else 0; n_post = post.origin.nunique() if len(post) else 0
     if n_pre < min_windows or n_post < min_windows:
@@ -48,14 +51,25 @@ def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origin
     return rows, dict(chronos=chronos_name, gap_chronos=g_c, gap_classical=g_cl, did=g_c - g_cl, n_pre=n_pre, n_post=n_post)
 
 
+GROUP = {"ecb": "fx", "wiki": "wikipedia", "neso": "electricity", "fredmd": "macro"}
+
+
+def _boot(d, n_boot, rng):
+    n = len(d)
+    b = np.array([rng.choice(d, n).mean() for _ in range(n_boot)]) if n > 1 else np.array([np.nan])
+    return float(np.nanpercentile(b, 2.5)), float(np.nanpercentile(b, 97.5))
+
+
 def aggregate(summary: pd.DataFrame, n_boot=4000, seed=0) -> pd.DataFrame:
-    """Mean DiD across series per model with a bootstrap-over-series 95% interval (few series -> wide, report honestly)."""
+    """Mean DiD (and median) per model, overall and per data group, with a bootstrap-over-series 95% interval.
+    Groups matter: FX is near random walk (nothing to leak), Wikipedia/electricity are where a model could have memorised."""
     rng = np.random.default_rng(seed); out = []
+    summary = summary.assign(group=summary.series.str.partition("_")[0].map(GROUP))
     for m, g in summary.groupby("chronos"):
-        d = g.did.to_numpy(); n = len(d)
-        boots = np.array([rng.choice(d, n).mean() for _ in range(n_boot)]) if n > 1 else np.array([np.nan])
-        out.append(dict(chronos=m, n_series=n, mean_did=float(d.mean()), ci_lo=float(np.nanpercentile(boots, 2.5)),
-                        ci_hi=float(np.nanpercentile(boots, 97.5)), n_positive=int((d > 0).sum())))
+        for name, sub in [("all", g)] + [(k, v) for k, v in g.groupby("group")]:
+            d = sub.did.to_numpy(); lo, hi = _boot(d, n_boot, rng)
+            out.append(dict(chronos=m, group=name, n_series=len(d), mean_did=float(d.mean()), median_did=float(np.median(d)),
+                            ci_lo=lo, ci_hi=hi, n_positive=int((d > 0).sum())))
     return pd.DataFrame(out)
 
 

@@ -212,3 +212,24 @@ def test_every_series_has_a_fetch_route_and_sane_metadata():
             assert key in WIKI_ARTICLES
         if kind == "ecb":
             assert key.startswith("EUR") and len(key) == 6
+
+
+def test_gap_uses_identical_full_context_before_and_after_release():
+    """Regression (found on the 22-series Colab run): short early contexts must not enter the pre-release period."""
+    from forecastclean.gap import gap_for_series
+    from forecastclean.models import naive
+    seen = []
+    def spy(tr, h, season=1):
+        seen.append(len(tr)); return naive(tr, h, season)
+    ser = pd.Series(np.random.default_rng(0).normal(size=1500).cumsum() + 100, index=pd.date_range("2018-01-01", periods=1500, freq="D"))
+    rel = "2021-06-01"
+    rows, _ = gap_for_series(ser, 1, 7, "spy", spy, rel, max_origins=20, max_context=400, eval_start="2018-01-01", min_windows=3, drop=("arima", "ets"))
+    assert rows is not None and set(seen) == {400}
+
+
+def test_gap_aggregate_has_overall_and_group_rows():
+    from forecastclean.gap import aggregate
+    summ = pd.DataFrame({"chronos": ["m"] * 4, "series": ["ecb_EURUSD", "ecb_EURGBP", "wiki_A", "neso_demand_hourly"],
+                         "did": [0.0, 0.1, -0.2, 0.3]})
+    a = aggregate(summ, n_boot=200).set_index("group")
+    assert set(a.index) == {"all", "fx", "wikipedia", "electricity"} and a.loc["all", "n_series"] == 4 and a.loc["fx", "n_positive"] == 1
