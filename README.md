@@ -7,27 +7,27 @@ Repo: https://github.com/mirzayasirabdullahbaig07/ForecastClean · Local: `C:\Us
 
 ## 📊 Project progress — where we are right now
 
-**Overall: 15% ▓▓▓░░░░░░░░░░░░░░░░░ (target: research-paper preprint)**
-_Last updated: 2026-11-25 · Current phase: **Phase 2 — Literature & gap statement**_
+**Overall: 22% ▓▓▓▓░░░░░░░░░░░░░░░░ (target: research-paper preprint)**
+_Last updated: 2026-11-25 · Current phases: **Phase 2 — Literature** (notes: [`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** (sources: [`DATA_SOURCES.md`](DATA_SOURCES.md))_
 
 | # | Phase | Weight | Done | Contribution | Status |
 |---|---|---:|---:|---:|---|
 | 1 | Framework + tests (rolling origin, MASE, DM test, 5 baselines, CLI) | 15% | 100% | 15% | ✅ Done (6/6 tests pass, `simulate` runs) |
-| 2 | Literature review + gap statement | 10% | 0% | 0% | 🔜 **Next** |
-| 3 | Choose 6–10 real series (source + licence recorded) | 10% | 0% | 0% | ⬜ Not started |
+| 2 | Literature review + gap statement | 10% | 40% | 4% | 🔄 **In progress** — arXiv IDs verified, gap options A/B/C written; full reading of 2510.13654 + 2609.10357 and final gap choice pending |
+| 3 | Choose 6–10 real series (source + licence recorded) | 10% | 30% | 3% | 🔄 **In progress** — 9 candidate series + tested download tool (`forecastclean download`); not yet run on your PC; licences still to confirm |
 | 4 | Real-data pipeline + Chronos adapter tested | 10% | 0% | 0% | ⬜ Not started |
 | 5 | Main experiments (all models × series × horizons) | 20% | 0% | 0% | ⬜ Not started |
 | 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 0% | 0% | ⬜ Not started |
 | 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 0% | 0% | ⬜ Not started |
 | 8 | Paper writing (8 sections) | 15% | 0% | 0% | ⬜ Not started |
 | 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 0% | 0% | ⬜ Not started |
-| | **Total** | **100%** | | **15%** | |
+| | **Total** | **100%** | | **22%** | |
 
 Overall % = sum of (weight × done). Update the "Done" column when a phase moves, then recompute.
 
 ### 🎯 Agenda — what we do next (in order)
-1. **Literature (Phase 2):** read Meyer et al. (arXiv:2510.13654) fully; skim TSFMAudit and TimesX; write a 5-line gap statement. *Check every arXiv ID and claim in this README against the real papers before citing.*
-2. **Pick the data (Phase 3):** S&P 500 (already have) + 2 energy + 2 macro + 2 retail/web series; record source URL and licence for each in `EXPERIMENT_LOG.md`.
+1. **Literature (Phase 2, in progress):** arXiv IDs verified. Still to do: read Meyer et al. (2510.13654) and the closest competitor *"A Later Test Set Is Not a New Domain"* (2609.10357) in full, then confirm gap statement A/B/C in `LITERATURE.md` (working assumption: **A**, ranking stability + protocol). **Novelty warning:** post-cutoff evaluation is already crowded.
+2. **Get the data (Phase 3, your PC):** `pip install -e ".[dev]"` → `python -m pytest -q` → `forecastclean download`; send me the output/errors (the download code could not be tested without internet). Then confirm each licence in `DATA_SOURCES.md`.
 3. **Run classical baselines on real data (Phase 4):** `forecastclean run --csv ...`, plot by eye.
 4. **Test Chronos (Phase 4):** run `amazon/chronos-bolt-tiny` on Colab/Kaggle (free GPU) or laptop CPU; record its documented training cutoff with a link.
 5. **Then** the full experiment grid (Phase 5).
@@ -37,13 +37,13 @@ Overall % = sum of (weight × done). Update the "Done" column when a phase moves
 - End of Phase 6: no contamination gap anywhere → report it as a null result with CIs.
 
 ### ✅ Honest status of what is verified
-- Verified (tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels.
-- **Not verified:** the Chronos adapter, and **any real-data result** (none exist yet).
+- Verified (12 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, and the data-cleaning functions (on synthetic inputs).
+- **Not verified:** the Chronos adapter; the download code against the live websites; and **any real-data result** (none exist yet).
 
 ---
 
 ## 1. Why this project
-It extends your time-series coursework (ARIMA on S&P 500) into a research question. Literature flags that foundation-model (TSFM) benchmarks risk **information leakage** — pretraining data overlapping with test series or periods (Meyer et al., arXiv:2510.13654), and contamination audits are emerging (TSFMAudit, arXiv:2605.26161; TimesX, arXiv:2607.06973). A rigorous, small-scale, *transparent* evaluation protocol on real series that *you choose* (financial, energy, macro) with proper statistical tests is feasible on a CPU.
+It extends your time-series coursework (ARIMA on S&P 500) into a research question. Literature flags that foundation-model (TSFM) benchmarks risk **information leakage** — pretraining data overlapping with test series or periods (Meyer et al., arXiv:2510.13654), and contamination audits are emerging (TSFMAudit, arXiv:2605.26161). Post-cutoff benchmarks already exist (e.g. TimesX, arXiv:2607.06973, a multimodal benchmark; arXiv:2609.10357), so our contribution must go beyond "evaluate after the cutoff" — see `LITERATURE.md`. A rigorous, small-scale, *transparent* evaluation protocol on real series that *you choose* (financial, energy, macro) with proper statistical tests is feasible on a CPU.
 
 ## 2. Research questions
 - **RQ1** Skill of each model vs a seasonal-naive/naive reference (relative MASE, Diebold–Mariano tests) on your series.
@@ -63,6 +63,9 @@ It extends your time-series coursework (ARIMA on S&P 500) into a research questi
 
 ## 4. Quick start
 ```bash
+pip install -e ".[dev]" && python -m pytest -q     # 12 tests
+forecastclean download                               # fetch + clean real series -> data/raw/*.csv, data/MANIFEST.csv
+forecastclean run --csv data/raw/fredmd_UNRATE.csv --date-col date --value-col value --h 12 --season 12 --out results/unrate
 pip install -e . pytest && python -m pytest -q
 forecastclean simulate                                   # synthetic pipeline check
 forecastclean run --csv sp500.csv --date-col Date --value-col Close --h 21 --returns --out results/sp500
