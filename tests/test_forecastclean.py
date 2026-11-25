@@ -44,11 +44,11 @@ def test_seasonal_models_beat_naive_on_seasonal_data_and_not_on_random_walk():
     s = seasonal_series(240, noise=0.2)
     res = evaluate(s, {k: BASELINES[k] for k in ["naive", "seasonal_naive", "ets"]}, h=12, season=12)
     t = skill_table(res, "naive").set_index("model")
-    assert t.loc["seasonal_naive", "rel_mase_geo"] < 0.7 and t.loc["ets", "rel_mase_geo"] < 0.7
+    assert t.loc["seasonal_naive", "rel_mase"] < 0.7 and t.loc["ets", "rel_mase"] < 0.7
     rw = random_walk(240, seed=1)
     res = evaluate(rw, {"naive": naive, "drift": drift}, h=12)
     t = skill_table(res, "naive").set_index("model")
-    assert t.loc["drift", "rel_mase_geo"] > 0.8                                # nothing to gain on a pure random walk
+    assert t.loc["drift", "rel_mase"] > 0.8                                # nothing to gain on a pure random walk
 
 
 def test_pre_post_cutoff_split_labels():

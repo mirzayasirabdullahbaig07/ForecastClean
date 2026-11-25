@@ -16,10 +16,10 @@ SWEEP = {"M": [1, 3, 6, 12], "D": [1, 7, 14, 28], "H": [1, 24, 48, 168], "B": [1
 
 
 def _kendall_between_horizons(tbl: pd.DataFrame) -> list[dict]:
-    """tbl: columns h, model, rel_mase_geo for one series. Kendall tau of model rankings between horizons."""
+    """tbl: columns h, model, rel_mase for one series. Kendall tau of model rankings between horizons."""
     from scipy import stats
     out, hs = [], sorted(tbl.h.unique())
-    wide = tbl.pivot_table(index="model", columns="h", values="rel_mase_geo")
+    wide = tbl.pivot_table(index="model", columns="h", values="rel_mase")
     for a, b in zip(hs[:-1], hs[1:]):
         t = stats.kendalltau(wide[a], wide[b])[0]
         out.append(dict(h_from=a, h_to=b, tau=float(t)))
@@ -78,7 +78,7 @@ def run_batch(args) -> int:
         pd.DataFrame(taus).round(4).to_csv(out / "horizon_rank_tau.csv", index=False)
     sel = summ[summ.period.isin(["all", "post_cutoff"])]
     for h_key, g in [(None, sel)] if not getattr(args, "horizon_sweep", False) else sel.groupby("h_idx"):
-        mat = g.pivot_table(index="series", columns="model", values="rel_mase_geo")
+        mat = g.pivot_table(index="series", columns="model", values="rel_mase")
         mat = np.log(mat.replace(0, np.nan)).dropna(axis=1, how="all")
         cs = across_series_stability(mat)
         print(f"\n[{'all horizons' if h_key is None else f'horizon position {h_key} (0=shortest)'}] mean log-relative MASE across {cs['n_units']} series (lower = better):\n",

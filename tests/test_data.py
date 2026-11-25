@@ -156,3 +156,15 @@ def test_batch_post_only_horizon_sweep_and_skip_empty(tmp_path):
     summ = pd.read_csv(tmp_path / "o" / "summary.csv")
     assert set(summ.series) == {"wiki_Python"} and summ.h.nunique() == 4 and set(summ.period) == {"post_cutoff"}
     assert (tmp_path / "o" / "horizon_rank_tau.csv").exists()
+
+
+def test_relative_mase_finite_when_reference_is_exact_at_some_origins():
+    """Regression: h=1 FX/wiki windows where naive is exactly right produced inf under a per-origin geometric mean (Colab, 2025-11-25)."""
+    from forecastclean.evaluate import skill_table
+    rows = []
+    for i, (a, b) in enumerate([(0.0, 0.5), (0.4, 0.5), (0.2, 0.5)]):
+        o = pd.Timestamp("2026-01-01") + pd.Timedelta(days=i)
+        for m, v in (("naive", a), ("ets", b)):
+            rows.append(dict(origin=o, target_start=o, target_end=o, model=m, mase=v))
+    t = skill_table(pd.DataFrame(rows), reference="naive").set_index("model")
+    assert np.isfinite(t.loc["ets", "rel_mase"]) and abs(t.loc["ets", "rel_mase"] - 0.5 / 0.2) < 1e-9

@@ -85,8 +85,9 @@ def skill_table(res: pd.DataFrame, reference="seasonal_naive", cutoff=None) -> p
     rows = []
     for period, g in w.groupby("period"):
         for m in models:
-            rel = g[m] / g[reference]
+            ref_mean = g[reference].mean()          # relative MASE = ratio of MEAN scaled errors (no per-origin division: the
+                                                    # reference is sometimes exactly right at one origin, e.g. FX unchanged, h=1)
             rows.append(dict(period=period, model=m, n_origins=len(g), mase=g[m].mean(),
-                             rel_mase_geo=float(np.exp(np.log(rel.replace(0, np.nan)).mean())),
+                             rel_mase=float(g[m].mean() / ref_mean) if ref_mean > 0 else np.nan,
                              dm_p_vs_ref=dm_test(g[m].to_numpy(), g[reference].to_numpy())[1] if m != reference else np.nan))
     return pd.DataFrame(rows)
