@@ -65,3 +65,11 @@ Consequences: (i) **cutoff = model release date** (conservative; verify each dat
 - [ ] Verify release dates: Chronos-Bolt, Chronos-2, and any added model (e.g. TimesFM) — at the model cards / repos.
 - [ ] A short, careful related-work search specifically for "rolling-origin post-release TSFM evaluation".
 - [ ] Final decision on A′ (you + supervisor).
+
+## 6. Release dates used as conservative cutoffs (`src/forecastclean/registry.py`)
+| model | clean-from date used | evidence found (search results; re-verify at primary sources) |
+|---|---|---|
+| Chronos-Bolt (tiny/mini/small/base) | **2024-12-01** (rounded later = safer) | AutoGluon 1.2.0, which introduced Chronos-Bolt, has release files dated 2024-11-26; AWS (China) blog: Bolt released Nov 2024; Chronos GitHub news lists fev release on 12 Dec 2024 |
+| Chronos-2 | **2025-10-31** | arXiv 2510.15821 submitted 17 Oct 2025; Amazon Science blog published 20 Oct 2025 (as translated by AWS Japan); AWS Germany: "October 2025" |
+| TimesFM 2.5 (not yet run) | **2025-09-15** | google-research/timesfm README "Sept. 15, 2025 TimesFM 2.5 is out"; Hugging Face Transformers docs: released 2025-09-15. (One low-quality page claims 31 Mar 2026 — contradicted by the primary sources; ignored.) |
+Meyer et al. rule: with several models, the clean period starts after the **latest** date among them (global, model-aware). A date later than the true release only makes the clean set smaller, never contaminated. Pre-release windows are "possibly seen", so any gap is a lower bound.

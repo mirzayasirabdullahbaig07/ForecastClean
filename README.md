@@ -7,21 +7,21 @@ Repo: https://github.com/mirzayasirabdullahbaig07/ForecastClean · Local: `C:\Us
 
 ## 📊 Project progress — where we are right now
 
-**Overall: 36% ▓▓▓▓▓▓▓░░░░░░░░░░░░░ (target: research-paper preprint)**
+**Overall: 40% ▓▓▓▓▓▓▓▓░░░░░░░░░░░░ (target: research-paper preprint)**
 _Last updated: 2026-11-25 · Current phases: **Phase 2 — Literature** (notes: [`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** (sources: [`DATA_SOURCES.md`](DATA_SOURCES.md)) and **Phase 4 — real-data pipeline**_
 
 | # | Phase | Weight | Done | Contribution | Status |
 |---|---|---:|---:|---:|---|
 | 1 | Framework + tests (rolling origin, MASE, DM test, 5 baselines, CLI) | 15% | 100% | 15% | ✅ Done (6/6 tests pass, `simulate` runs) |
-| 2 | Literature review + gap statement | 10% | 75% | 7.5% | 🔄 **Nearly done** — closest competitor (2609.10357) analysed; new gap **A′** (rolling origins after release dates + horizon sweep) in `LITERATURE.md` §5; you still read the 2 key papers + verify release dates |
+| 2 | Literature review + gap statement | 10% | 80% | 8% | 🔄 **Nearly done** — closest competitor (2609.10357) analysed; new gap **A′** (rolling origins after release dates + horizon sweep) in `LITERATURE.md` §5; release dates found (`LITERATURE.md` §6); you still read the 2 key papers + confirm dates at the model cards |
 | 3 | Choose 6–10 real series (source + licence recorded) | 10% | 70% | 7% | 🔄 **Mostly done** — all 9 series downloaded (2026-11-25) and manifest saved; **licences still to confirm**; macro series end 2025 (see agenda) |
 | 4 | Real-data pipeline + Chronos adapter tested | 10% | 55% | 5.5% | 🔄 **In progress** — classical baselines run on 9 real series; Chronos adapter fixed against the library source + stand-in tests + Colab notebook `notebooks/chronos_colab.ipynb`; **real Chronos run still to do (you, on Colab)** |
-| 5 | Main experiments (all models × series × horizons) | 20% | 0% | 0% | ⬜ Not started |
-| 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 15% | 1.5% | 🔄 Code ready (bootstrap ranking stability, Holm correction, pre/post split); needs real results + CIs for the gap |
+| 5 | Main experiments (all models × series × horizons) | 20% | 10% | 2% | 🔄 **Started** — classical models only: post-release (after 2025-10-31) rolling windows + horizon sweep done in sandbox on your data (see log); foundation models still missing |
+| 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 25% | 2.5% | 🔄 Code ready (`--release-cutoff --post-only --horizon-sweep`: bootstrap ranking stability, Kendall tau across horizons, Holm); needs foundation-model results for the actual gap |
 | 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 0% | 0% | ⬜ Not started |
 | 8 | Paper writing (8 sections) | 15% | 0% | 0% | ⬜ Not started |
 | 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 0% | 0% | ⬜ Not started |
-| | **Total** | **100%** | | **36.5%** | |
+| | **Total** | **100%** | | **40%** | |
 
 Overall % = sum of (weight × done). Update the "Done" column when a phase moves, then recompute.
 
@@ -38,7 +38,7 @@ Overall % = sum of (weight × done). Update the "Done" column when a phase moves
 - End of Phase 6: no contamination gap anywhere → report it as a null result with CIs.
 
 ### ✅ Honest status of what is verified
-- Verified (17 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
+- Verified (19 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
 - **Preliminary only:** classical-baseline results on 9 real series exist (see `EXPERIMENT_LOG.md`) but are sanity checks, not findings.
 - **Not verified:** the Chronos adapter with real weights (tested only with stand-in pipelines); any foundation-model result (none exist yet); licences of the data sources.
 
@@ -67,9 +67,10 @@ It extends your time-series coursework (ARIMA on S&P 500) into a research questi
 
 ## 4. Quick start
 ```bash
-pip install -e ".[dev]" && python -m pytest -q     # 17 tests
+pip install -e ".[dev]" && python -m pytest -q     # 19 tests
 forecastclean download                               # fetch + clean real series -> data/raw/*.csv, data/MANIFEST.csv
 forecastclean batch                                  # all series in data/raw -> results/batch/
+forecastclean batch --clean-from 2025-10-31 --post-only --horizon-sweep --out results/post   # A': only post-release windows, 4 horizons per series
 forecastclean run --csv data/raw/fredmd_UNRATE.csv --date-col date --value-col value --h 12 --season 12 --out results/unrate
 pip install -e . pytest && python -m pytest -q
 forecastclean simulate                                   # synthetic pipeline check

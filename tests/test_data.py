@@ -108,3 +108,29 @@ def test_chronos_adapter_handles_bolt_and_chronos2_output_shapes(monkeypatch):
     assert f1(tr, 6).tolist() == [5, 6, 7, 8, 9, 10] and seen["len"] == 50      # context passed unchanged, no look-ahead
     assert f2(tr, 4).tolist() == [7, 8, 9, 10]
     assert f1.__name__ == "chronos-bolt-tiny" and f2.__name__ == "chronos-2"
+
+
+def test_registry_global_cutoff_and_unknown_model():
+    import pytest
+    from forecastclean.registry import clean_from
+    assert clean_from(["chronos-bolt-tiny", "chronos-2"]) == pd.Timestamp("2025-10-31")
+    assert clean_from([]) is None
+    with pytest.raises(KeyError):
+        clean_from(["not-a-real-model"])
+
+
+def test_batch_post_only_horizon_sweep_and_skip_empty(tmp_path):
+    import argparse
+    from forecastclean.batch import run_batch
+    from forecastclean.synthetic import seasonal_series
+    d = tmp_path / "raw"; d.mkdir()
+    s = seasonal_series(400, season=7, start="2024-01-01")
+    pd.DataFrame({"date": pd.date_range("2024-01-01", periods=400, freq="D"), "value": s.values}).to_csv(d / "wiki_Python.csv", index=False)
+    old = seasonal_series(120, season=12, start="2010-01-01")                 # ends 2019 -> nothing after cutoff
+    pd.DataFrame({"date": old.index, "value": old.values}).to_csv(d / "fredmd_UNRATE.csv", index=False)
+    args = argparse.Namespace(data=str(d), out=str(tmp_path / "o"), only=None, chronos=None, cutoff=None, clean_from="2024-09-01",
+                              release_cutoff=False, post_only=True, horizon_sweep=True, max_context=100, max_origins=5, eval_start="2015-01-01")
+    assert run_batch(args) == 0
+    summ = pd.read_csv(tmp_path / "o" / "summary.csv")
+    assert set(summ.series) == {"wiki_Python"} and summ.h.nunique() == 4 and set(summ.period) == {"post_cutoff"}
+    assert (tmp_path / "o" / "horizon_rank_tau.csv").exists()
