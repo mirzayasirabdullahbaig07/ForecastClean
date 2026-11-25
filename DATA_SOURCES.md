@@ -6,13 +6,13 @@ _Status 2026-11-25: **candidate list.** The download code is written and its cle
 
 | name | what | freq / season | source | licence / terms | status |
 |---|---|---|---|---|---|
-| fredmd_UNRATE | US unemployment rate | monthly / 12 | FRED-MD `current.csv` (St. Louis Fed; McCracken & Ng 2016, JBES 34(4)) | ⚠ confirm FRED terms of use | to download |
-| fredmd_CPIAUCSL | US CPI, all items | monthly / 12 | FRED-MD | ⚠ confirm | to download |
-| fredmd_INDPRO | US industrial production | monthly / 12 | FRED-MD | ⚠ confirm | to download |
+| fredmd_UNRATE | US unemployment rate (seasonally adjusted) | monthly / 1 | FRED-MD `current.csv` (St. Louis Fed; McCracken & Ng 2016, JBES 34(4)) | ⚠ confirm FRED terms of use | to download |
+| fredmd_CPIAUCSL | US CPI, all items (seasonally adjusted) | monthly / 1 | FRED-MD | ⚠ confirm | to download |
+| fredmd_INDPRO | US industrial production (seasonally adjusted) | monthly / 1 | FRED-MD | ⚠ confirm | to download |
 | neso_demand_daily | GB national demand (ND), daily mean MW | daily / 7 | NESO Historic Demand Data (CKAN API, package `8f2fe0af-…`) | **NESO Open Data Licence** (shown on the NESO portal) — read it for attribution terms | to download |
 | neso_demand_hourly | same, hourly mean | hourly / 24 | NESO | same | to download (approximate on 2 clock-change days/year) |
-| ecb_EURUSD | EUR/USD reference rate | business-daily / 5 | ECB Data Portal (SDMX CSV) | ⚠ confirm ECB reuse/attribution policy | to download |
-| ecb_EURGBP | EUR/GBP reference rate | business-daily / 5 | ECB | ⚠ confirm | to download |
+| ecb_EURUSD | EUR/USD reference rate | business-daily / 1 | ECB Data Portal (SDMX CSV) | ⚠ confirm ECB reuse/attribution policy | to download |
+| ecb_EURGBP | EUR/GBP reference rate | business-daily / 1 | ECB | ⚠ confirm | to download |
 | wiki_Python | en.wikipedia pageviews, `Python_(programming_language)` | daily / 7 | Wikimedia REST API (from 2015-07) | ⚠ confirm Wikimedia terms | to download |
 | wiki_Christmas | en.wikipedia pageviews, `Christmas` | daily / 7 | Wikimedia REST API | ⚠ confirm | to download |
 | sp500 (yours) | S&P 500 close from your coursework | daily | your existing file | ⚠ market-data vendor terms usually forbid redistribution — **keep it out of GitHub** | you have it |
@@ -31,3 +31,6 @@ _Status 2026-11-25: **candidate list.** The download code is written and its cle
 ## Reproducibility
 - `data/MANIFEST.csv` stores URL, retrieval time (UTC), row count, first/last date and SHA-256 per file.
 - FRED-MD `current.csv` is replaced monthly: record the retrieval date; for the paper, pin a dated vintage (e.g. `2026-xx.csv`) instead of `current.csv`.
+
+## Download results (2026-11-25)
+All 9 downloaded. Coverage: FRED-MD 1959→**2025-08/09** (only through 2025 despite a Nov-2026 download — try a newer dated vintage with `--fred-vintage`); NESO 2001→2026-11-03; ECB 2000→2026-11-24; Wikipedia 2015-07→2026-11-23. Macro series therefore cannot provide windows after 2025.

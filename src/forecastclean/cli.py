@@ -7,11 +7,12 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("simulate", help="Pipeline check on synthetic series"); s.add_argument("--out", default="results/simulate")
     d = sub.add_parser("download", help="Download + clean the real series (needs internet)")
-    d.add_argument("--out", default="data"); d.add_argument("--only", nargs="*", help="series names, default all")
+    d.add_argument("--out", default="data"); d.add_argument("--fred-vintage", help="e.g. 2026-10 to use that FRED-MD vintage instead of current.csv"); d.add_argument("--only", nargs="*", help="series names, default all")
     b = sub.add_parser("batch", help="Run every series found in --data (from `forecastclean download`)")
     b.add_argument("--data", default="data/raw"); b.add_argument("--out", default="results/batch")
     b.add_argument("--only", nargs="*"); b.add_argument("--chronos"); b.add_argument("--cutoff")
-    b.add_argument("--max-context", type=int, default=1024); b.add_argument("--max-origins", type=int, default=60)
+    b.add_argument("--max-context", type=int, default=1024); b.add_argument("--max-origins", type=int, default=150)
+    b.add_argument("--eval-start", default="2015-01-01", help="only score windows whose target starts on/after this date")
     r = sub.add_parser("run", help="Evaluate on YOUR csv (columns: date,value)")
     r.add_argument("--csv", required=True); r.add_argument("--date-col", default="date"); r.add_argument("--value-col", default="value")
     r.add_argument("--h", type=int, default=12); r.add_argument("--season", type=int, default=1)
@@ -25,7 +26,7 @@ def main(argv=None):
         return run_batch(args)
     if args.cmd == "download":
         from .data import download_all
-        return download_all(args.out, args.only)
+        return download_all(args.out, args.only, args.fred_vintage)
     import numpy as np, pandas as pd
     from .evaluate import evaluate, skill_table
     from .models import BASELINES

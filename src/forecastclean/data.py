@@ -29,15 +29,16 @@ NESO_API = "https://api.neso.energy/api/3/action/"
 WIKI_URL = ("https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/"
             "all-access/user/{article}/daily/{start}/{end}")
 
-# name -> (frequency, season, short description)
+# name -> (frequency, season, short description). season=1 means NO seasonality: FRED-MD UNRATE/CPIAUCSL/INDPRO are
+# seasonally adjusted, and FX has no weekly cycle.
 SERIES = {
-    "fredmd_UNRATE": ("M", 12, "US unemployment rate (FRED-MD)"),
-    "fredmd_CPIAUCSL": ("M", 12, "US CPI all items (FRED-MD)"),
-    "fredmd_INDPRO": ("M", 12, "US industrial production index (FRED-MD)"),
+    "fredmd_UNRATE": ("M", 1, "US unemployment rate (FRED-MD)"),
+    "fredmd_CPIAUCSL": ("M", 1, "US CPI all items (FRED-MD)"),
+    "fredmd_INDPRO": ("M", 1, "US industrial production index (FRED-MD)"),
     "neso_demand_daily": ("D", 7, "GB national demand, daily mean MW (NESO)"),
     "neso_demand_hourly": ("H", 24, "GB national demand, hourly mean MW (NESO)"),
-    "ecb_EURUSD": ("B", 5, "EUR/USD ECB reference rate, daily (near random walk)"),
-    "ecb_EURGBP": ("B", 5, "EUR/GBP ECB reference rate, daily (near random walk)"),
+    "ecb_EURUSD": ("B", 1, "EUR/USD ECB reference rate, daily (near random walk)"),
+    "ecb_EURGBP": ("B", 1, "EUR/GBP ECB reference rate, daily (near random walk)"),
     "wiki_Python": ("D", 7, "en.wikipedia pageviews: Python_(programming_language)"),
     "wiki_Christmas": ("D", 7, "en.wikipedia pageviews: Christmas"),
 }
@@ -112,12 +113,13 @@ def _neso_raw() -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
-def fetch(name: str) -> tuple[pd.DataFrame, str]:
+def fetch(name: str, fred_vintage: str | None = None) -> tuple[pd.DataFrame, str]:
     """Return (clean date,value frame, source URL) for a named series."""
     kind, _, key = name.partition("_")
     if kind == "fredmd":
-        raw = pd.read_csv(io.BytesIO(_get(FRED_MD_URL)))
-        return clean_fred_md(raw, key), FRED_MD_URL
+        url = FRED_MD_URL if not fred_vintage else FRED_MD_URL.replace("current.csv", f"{fred_vintage}.csv")
+        raw = pd.read_csv(io.BytesIO(_get(url)))
+        return clean_fred_md(raw, key), url
     if kind == "ecb":
         url = ECB_URL.format(ccy=key.replace("EUR", ""))
         return clean_ecb(pd.read_csv(io.BytesIO(_get(url)))), url
@@ -131,13 +133,13 @@ def fetch(name: str) -> tuple[pd.DataFrame, str]:
     raise KeyError(name)
 
 
-def download_all(out_dir="data", only=None) -> int:
+def download_all(out_dir="data", only=None, fred_vintage=None) -> int:
     out = Path(out_dir); raw = out / "raw"; raw.mkdir(parents=True, exist_ok=True)
     names = only or list(SERIES)
     rows, failed = [], []
     for n in names:
         try:
-            df, url = fetch(n)
+            df, url = fetch(n, fred_vintage)
             path = raw / f"{n}.csv"; df.to_csv(path, index=False)
             rows.append(dict(name=n, freq=SERIES[n][0], season=SERIES[n][1], url=url,
                              retrieved_utc=datetime.now(timezone.utc).isoformat(timespec="seconds"),

@@ -11,7 +11,7 @@ from .evaluate import evaluate, skill_table
 from .models import BASELINES
 from .stability import across_series_stability, holm, ranking_stability
 
-H_BY_FREQ = {"M": 12, "D": 14, "H": 24, "B": 10}
+H_BY_FREQ = {"M": 6, "D": 14, "H": 24, "B": 10}
 
 
 def run_batch(args) -> int:
@@ -28,10 +28,10 @@ def run_batch(args) -> int:
         freq, season, _ = SERIES[n]
         df = pd.read_csv(data / f"{n}.csv", parse_dates=["date"]).sort_values("date")
         ser = df.set_index("date")["value"].astype(float)
-        ref = "seasonal_naive" if season > 1 else "naive"
+        ref = "naive"                                        # one reference for every series (see README §3)
         print(f"{n}: {len(ser)} obs, h={H_BY_FREQ[freq]}, season={season}", flush=True)
         res = evaluate(ser, fc, h=H_BY_FREQ[freq], season=season,
-                       max_context=args.max_context, max_origins=args.max_origins)
+                       max_context=args.max_context, max_origins=args.max_origins, eval_start=args.eval_start)
         t = skill_table(res, ref, args.cutoff); t.insert(0, "series", n); rows.append(t)
         st = ranking_stability(res); st["series"] = n; stab.append(st)
     summ = pd.concat(rows, ignore_index=True)

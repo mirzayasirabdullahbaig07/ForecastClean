@@ -70,3 +70,15 @@ def test_ranking_stability_high_for_clear_winner_low_for_ties():
     tie = pd.DataFrame({k: rng.normal(1, .5, 30) for k in "abc"})
     assert _stab(clear, 200, 0)["mean_tau"] > 0.95 and _stab(clear, 200, 0)["p_best_same"] > 0.95
     assert _stab(tie, 200, 0)["p_best_same"] < 0.8
+
+
+def test_eval_start_and_new_baselines():
+    from forecastclean.evaluate import evaluate
+    from forecastclean.models import theta, comb, BASELINES
+    from forecastclean.synthetic import seasonal_series
+    s = seasonal_series(240)
+    res = evaluate(s, {"naive": BASELINES["naive"], "theta": theta}, h=12, season=12, eval_start="2012-01-01")
+    assert (res.target_start >= pd.Timestamp("2012-01-01")).all() and res.origin.nunique() >= 2
+    f = comb(s.to_numpy(), 12, 12)
+    assert f.shape == (12,) and np.isfinite(f).all()
+    assert np.isfinite(theta(s.to_numpy(), 12, 1)).all()

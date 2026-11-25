@@ -48,6 +48,23 @@ def arima(train, h, season=1, order=(1, 1, 1)):
             return naive(train, h)
 
 
+def theta(train, h, season=1):
+    from statsmodels.tsa.forecasting.theta import ThetaModel
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            use = season > 1 and len(train) >= 2 * season
+            m = ThetaModel(np.asarray(train, float), period=season if use else None, deseasonalize=use).fit()
+            return np.asarray(m.forecast(h))
+        except Exception:
+            return naive(train, h)
+
+
+def comb(train, h, season=1):
+    """Equal-weight combination of ETS, ARIMA and Theta (combinations are hard to beat in forecasting competitions)."""
+    return np.mean([ets(train, h, season), arima(train, h, season), theta(train, h, season)], axis=0)
+
+
 def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="cpu"):
     """Adapter (untested here). Returns a forecaster using the median of the predictive distribution."""
     import torch
@@ -62,4 +79,5 @@ def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="cpu"):
     return f
 
 
-BASELINES = {"naive": naive, "seasonal_naive": seasonal_naive, "drift": drift, "ets": ets, "arima": arima}
+BASELINES = {"naive": naive, "seasonal_naive": seasonal_naive, "drift": drift, "ets": ets, "arima": arima,
+             "theta": theta, "comb": comb}
