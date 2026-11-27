@@ -43,7 +43,7 @@ Overall % = sum of (weight × done). Update the "Done" column when a phase moves
 - Verified (27 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
 - Verified on real weights (Colab, 2026-11-25): the Chronos adapter for Bolt-tiny, Bolt-small and Chronos-2.
 - **Preliminary only:** all foundation-model results (untuned ARIMA/ETS, release-date cutoffs rather than published training cutoffs, bootstrap over series treats correlated series — EUR crosses, Wikipedia pages — as independent, so intervals are too narrow).
-- **Not verified:** release dates at the primary model cards; licences of the data sources; robustness of the null result to a window-level bootstrap (code + tests ready, not yet run on real windows).
+- **Verified 2026-11-27:** release dates (Chronos-Bolt 26 Nov 2024, Chronos-2 20 Oct 2025 per the Chronos GitHub news; arXiv 17 Oct 2025) — our cutoffs are later; model cards state no data cutoff; both Apache-2.0. **Not verified:** licences of the data sources; robustness of the null result to a window-level bootstrap (code + tests ready, not yet run on real windows).
 
 ---
 

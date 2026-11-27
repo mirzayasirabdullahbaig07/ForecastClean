@@ -56,7 +56,7 @@ Every number in this paper comes from rolling-origin forecasts scored against na
 
 A positive DiD means the foundation model lost more skill after release than classical models did, which is the signature of leakage. Subtracting the classical median removes a data shift that affects all models alike. A positive DiD is a signature, not proof, and a zero DiD does not prove the data was unseen.
 
-**Cutoffs.** Training cutoffs are not published for these models, so we use release dates: Chronos-Bolt 1 Dec 2024 (rounded late) and Chronos-2 31 Oct 2025. A later date than the true release can only shrink the clean set. We have not yet checked each date at the model card.
+**Cutoffs.** Training cutoffs are not published for these models, so we use release dates: Chronos-Bolt 1 Dec 2024 (rounded late) and Chronos-2 31 Oct 2025. A later date than the true release can only shrink the clean set. We checked both dates on 27 Nov 2026: the Chronos GitHub news lists Chronos-Bolt on 26 Nov 2024 and Chronos-2 on 20 Oct 2025, and the Chronos-2 paper appeared on arXiv on 17 Oct 2025. Our cutoffs are later than both. Neither model card states a data cutoff, and both models are Apache-2.0.
 
 **Statistics.** Intervals for the gap are bootstrapped over series, with variants described in Section 5.3. The framework also implements Diebold–Mariano tests with the Harvey correction and Holm correction, and Kendall-tau ranking stability over resampled origins and series; the ranking-stability result is reported in Section 5.1.
 
@@ -144,10 +144,10 @@ The null result in Section 5.2 is weaker than it looks, for these reasons.
 - **Intervals are too narrow.** The bootstrap resamples series as independent, but the EUR pairs share a currency and the Wikipedia pages share news cycles. Counting the EUR pairs as one unit widens the intervals but does not change the conclusion. The window-level bootstrap is not yet run on real data.
 - **Few series per group.** Electricity has two series, and its positive gap is unexplained. We cannot separate a leakage effect from a change in demand.
 - **Classical models are fixed.** ARIMA is a fixed (1,1,1) in most runs and was dropped from the RQ2 runs. Tuned AutoARIMA ran only on non-seasonal series, so the strongest classical competitor is missing on seasonal series.
-- **One foundation-model family.** Both models are Chronos. We have not run TimesFM or Moirai, so the result may not transfer.
+- **One foundation-model family.** Both models are Chronos. We have not run TimesFM or Moirai, so the result may not transfer. Domain familiarity is also not controlled: the public Chronos Datasets collection includes Wikipedia daily traffic, electricity and exchange-rate subsets, and the Chronos-2 card says its training data is a subset of that collection (the cards do not say which subsets). Scoring only windows after release removes overlap in time, but the models may still know these kinds of series.
 - **Point forecasts only.** We score MASE of the median forecast. CRPS and weighted quantile loss are not yet reported.
 - **Short sample.** Post-release windows cover about one year, so the clean-data result describes one period.
-- **Unchecked sources.** Release dates have not been confirmed at the primary model cards, and the data licences (FRED-MD, ECB, Wikimedia, NESO) are not yet confirmed.
+- **Unchecked sources.** The data licences (FRED-MD, ECB, Wikimedia, NESO) are not yet confirmed.
 
 ## 7 Conclusion
 
@@ -165,7 +165,7 @@ This draft uses only results we have. These items would change or strengthen it;
 | --- | --- | --- |
 | Save the RQ1 result files and report skill by data group | Only the printed table exists. Prior work found methods tied on exchange rates, so the group split is needed. | Re-run or zip the Colab output (Faiqa), then Claude |
 | Run the window-level block bootstrap on real windows | The current intervals treat series as independent. | Notebook cell 4e, about 1 hour on Colab |
-| Confirm each release date at its model card | The cutoff is the central assumption of RQ2. | Claude, then Faiqa checks |
+| Release dates: checked on 27 Nov 2026, done | The cutoff is the central assumption of RQ2. | Claude, then Faiqa checks |
 | Read the two key papers in full and fix Section 2 | Summaries so far are secondhand. | Faiqa, with supervisor |
 | Add a second model family (TimesFM 2.5) | One family limits the claim. | Claude adapter, Colab run |
 | Explain or bound the electricity result | It is the only positive gap. | Claude: split by regime and season |
