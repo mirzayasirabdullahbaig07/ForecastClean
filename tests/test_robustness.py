@@ -77,3 +77,46 @@ def test_gap_collect_returns_per_window_mase_usable_by_block_bootstrap():
     m = w[w.period == "post"].groupby("model").mase.mean(); assert abs(m["m"] / m["naive"] - rows.set_index("model").loc["m", "rel_post"]) < 1e-3
     w = w.assign(series="s", chronos="m", h=7)
     assert len(rb.block_did(w, block=3, n_boot=50)) == 1
+
+
+# ---------- TimesFM adapter (fake model; real weights are untested until the first Colab run) ----------
+def test_timesfm_adapter_returns_the_median_and_passes_context_unchanged():
+    from forecastclean.models import timesfm_forecaster
+    seen = {}
+
+    class Fake:
+        def forecast(self, horizon, inputs):
+            seen["h"] = horizon; seen["len"] = len(inputs[0]); seen["n"] = len(inputs)
+            q = np.zeros((1, horizon, 10)); q[0, :, 0] = -1; q[0, :, 5] = np.arange(horizon) + 10      # mean slot = -1, median slot = 10..
+            return np.full((1, horizon), 99.0), q
+    f = timesfm_forecaster("google/timesfm-2.5-200m-pytorch", model=Fake())
+    assert f(np.arange(50.0), 4).tolist() == [10, 11, 12, 13]                 # q50 (index 5), not the mean or the point forecast
+    assert seen == {"h": 4, "len": 50, "n": 1} and f.__name__ == "timesfm-2.5-200m-pytorch"
+
+
+def test_timesfm_adapter_falls_back_to_point_forecast_and_rejects_too_long_horizons():
+    from forecastclean.models import timesfm_forecaster
+
+    class NoQ:
+        def forecast(self, horizon, inputs):
+            return np.arange(horizon, dtype=float).reshape(1, horizon), np.zeros((1, horizon, 3))      # unexpected quantile axis
+    f = timesfm_forecaster(model=NoQ(), max_horizon=8)
+    assert f(np.arange(30.0), 3).tolist() == [0, 1, 2]
+    import pytest
+    with pytest.raises(ValueError):
+        f(np.arange(30.0), 9)
+
+
+def test_foundation_forecaster_routes_timesfm_ids_to_the_timesfm_adapter(monkeypatch):
+    from forecastclean import models
+    called = {}
+    monkeypatch.setattr(models, "timesfm_forecaster", lambda mid, **kw: called.setdefault("t", mid))
+    monkeypatch.setattr(models, "chronos_forecaster", lambda mid, **kw: called.setdefault("c", mid))
+    models.foundation_forecaster("google/timesfm-2.5-200m-pytorch"); models.foundation_forecaster("amazon/chronos-2")
+    assert called == {"t": "google/timesfm-2.5-200m-pytorch", "c": "amazon/chronos-2"}
+
+
+def test_registry_knows_the_timesfm_id_that_batch_and_gap_derive():
+    from forecastclean.registry import RELEASE, clean_from
+    assert "timesfm-2.5-200m-pytorch" in RELEASE
+    assert str(clean_from(["chronos-2", "timesfm-2.5-200m-pytorch"]).date()) == "2025-10-31"   # latest of the two

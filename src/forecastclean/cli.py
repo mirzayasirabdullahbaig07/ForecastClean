@@ -61,8 +61,8 @@ def main(argv=None):
             ser = np.log(ser).diff().dropna()
         season, cutoff = args.season, args.cutoff
         if args.chronos:
-            from .models import chronos_forecaster
-            fc["chronos"] = chronos_forecaster(args.chronos)
+            from .models import foundation_forecaster
+            fc["chronos"] = foundation_forecaster(args.chronos)
     h = 12 if args.cmd == "simulate" else args.h
     res = evaluate(ser, fc, h=h, season=season)
     t = skill_table(res, "seasonal_naive" if season > 1 else "naive", cutoff)

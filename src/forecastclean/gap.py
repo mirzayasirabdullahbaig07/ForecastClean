@@ -78,7 +78,7 @@ def aggregate(summary: pd.DataFrame, n_boot=4000, seed=0) -> pd.DataFrame:
 
 
 def run_gap(args) -> int:
-    from .models import chronos_forecaster
+    from .models import foundation_forecaster
     from .registry import RELEASE
     data, out = Path(args.data), Path(args.out); out.mkdir(parents=True, exist_ok=True)
     names = args.only or [n for n in SERIES if (data / f"{n}.csv").exists()]
@@ -87,7 +87,7 @@ def run_gap(args) -> int:
     allrows, sums, wins = [], [], []
     for mid in args.chronos:
         short = mid.split("/")[-1]; rel = RELEASE[short][0]                   # KeyError = unknown model: never guess a date
-        fcm = chronos_forecaster(mid)
+        fcm = foundation_forecaster(mid)
         print(f"\n== {short}: release (clean-from) {rel}", flush=True)
         for n in names:
             freq, season, _ = SERIES[n]

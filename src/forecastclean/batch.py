@@ -41,8 +41,8 @@ def run_batch(args) -> int:
         print(f"No series found in {data}. Run `forecastclean download` first."); return 1
     fc = dict(BASELINES)
     for mid in (args.chronos or []):
-        from .models import chronos_forecaster
-        fc[mid.split("/")[-1]] = chronos_forecaster(mid)
+        from .models import foundation_forecaster
+        fc[mid.split("/")[-1]] = foundation_forecaster(mid)
     pretrained = [k for k in fc if k not in BASELINES]
     cutoff = args.cutoff
     if getattr(args, "release_cutoff", False):

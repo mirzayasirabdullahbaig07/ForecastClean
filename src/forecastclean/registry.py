@@ -17,7 +17,8 @@ RELEASE = {
     "chronos-bolt-small": ("2024-12-01", "same as chronos-bolt-tiny"),
     "chronos-bolt-base": ("2024-12-01", "same as chronos-bolt-tiny"),
     "chronos-2": ("2025-10-31", "Amazon Science blog 2025-10-20; arXiv 2510.15821 submitted 2025-10-17"),
-    "timesfm-2.5": ("2025-09-15", "google-research/timesfm README 'Sept. 15, 2025 TimesFM 2.5 is out'; HF Transformers docs: released 2025-09-15"),
+    "timesfm-2.5": ("2025-10-03", "README: 2.5 out 2025-09-15; HF card for google/timesfm-2.5-200m-pytorch: weights last updated 2025-10-02 (QKV fusion) -> clean-from the day after"),
+    "timesfm-2.5-200m-pytorch": ("2025-10-03", "same as timesfm-2.5 (the id batch/gap derive from google/timesfm-2.5-200m-pytorch)"),
 }
 
 

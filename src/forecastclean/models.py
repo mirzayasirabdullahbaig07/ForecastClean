@@ -97,6 +97,37 @@ def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="auto", pipel
     return f
 
 
+def timesfm_forecaster(model_id="google/timesfm-2.5-200m-pytorch", max_context=1024, max_horizon=256, model=None):
+    """Adapter for TimesFM 2.5 (median forecast), written against the usage example on the Hugging Face model card
+    (fetched 2026-11-27): timesfm.TimesFM_2p5_200M_torch.from_pretrained(id), model.compile(ForecastConfig(...)),
+    model.forecast(horizon, inputs=[1-d arrays]) -> (point [n,h], quantiles [n,h,10] = mean, q10..q90).
+    NOT yet run on real weights (the sandbox cannot download them) - first Colab run is the real test.
+    `model` lets tests inject a fake. Needs `pip install` from source: git clone google-research/timesfm; pip install -e .[torch].
+    torch_compile is off on purpose (torch.compile is fragile on Colab's Python 3.13); max_horizon must cover the largest h."""
+    if model is None:
+        import timesfm
+        model = timesfm.TimesFM_2p5_200M_torch.from_pretrained(model_id, torch_compile=False)
+        model.compile(timesfm.ForecastConfig(max_context=max_context, max_horizon=max_horizon, normalize_inputs=True,
+                                              use_continuous_quantile_head=True, force_flip_invariance=True,
+                                              infer_is_positive=True, fix_quantile_crossing=True))
+
+    def f(train, h, season=1):
+        if h > max_horizon:
+            raise ValueError(f"horizon {h} exceeds the compiled max_horizon {max_horizon}")
+        point, quant = model.forecast(horizon=h, inputs=[np.asarray(train, dtype=np.float32)])
+        q = np.asarray(quant, dtype=float)
+        # quantile axis = [mean, q10, ..., q90] -> index 5 is the median, matching the median used for Chronos; fall back to point
+        out = q[0, :, 5] if q.ndim == 3 and q.shape[-1] == 10 else np.asarray(point, dtype=float)[0]
+        return np.asarray(out, dtype=float)[:h]
+    f.__name__ = model_id.split("/")[-1]
+    return f
+
+
+def foundation_forecaster(model_id, **kw):
+    """One entry point for every pretrained model: TimesFM ids go to the TimesFM adapter, everything else to Chronos."""
+    return timesfm_forecaster(model_id, **kw) if "timesfm" in model_id.lower() else chronos_forecaster(model_id, **kw)
+
+
 # ---------- tuned (automatically selected) baselines: statsforecast AutoETS / AutoTheta / AutoARIMA ----------
 # Untuned ETS/ARIMA(1,1,1) are the first thing a reviewer attacks, so these select the model form by information
 # criterion on each training window. Optional dependency: `pip install statsforecast`.
