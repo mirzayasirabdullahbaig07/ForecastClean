@@ -6,4 +6,5 @@ results/*
 !results/.gitkeep
 data/raw/
 !results/gap_fixed/
+!results/chronos_post_tuned/
 *.zip
