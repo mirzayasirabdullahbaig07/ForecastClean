@@ -7,7 +7,7 @@ Repo: https://github.com/mirzayasirabdullahbaig07/ForecastClean · Local: `C:\Us
 
 ## 📊 Project progress — where we are right now
 
-**Overall: 57% ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ (target: research-paper preprint)**
+**Overall: 58% ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ (target: research-paper preprint)**
 _Last updated: 2026-11-27 · Current phases: **Phase 5 — main experiments** (first Chronos results logged in [`EXPERIMENT_LOG.md`](EXPERIMENT_LOG.md)), plus **Phase 2 — Literature** ([`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** ([`DATA_SOURCES.md`](DATA_SOURCES.md)) to finish_
 
 | # | Phase | Weight | Done | Contribution | Status |
@@ -17,11 +17,11 @@ _Last updated: 2026-11-27 · Current phases: **Phase 5 — main experiments** (f
 | 3 | Choose 6–10 real series (source + licence recorded) | 10% | 70% | 7% | 🔄 **Mostly done** — all 9 series downloaded (2026-11-25) and manifest saved; **licences still to confirm**; macro series end 2025 (see agenda) |
 | 4 | Real-data pipeline + Chronos adapter tested | 10% | 95% | 9.5% | ✅ **Nearly done** — Chronos-Bolt and Chronos-2 run on real weights (Colab); tuned baselines (AutoETS, AutoTheta, AutoARIMA on non-seasonal series) implemented + tested (`--tuned`), **Colab run done 2026-11-27 (25 series)**. Left: TimesFM adapter |
 | 5 | Main experiments (all models × series × horizons) | 20% | 50% | 10% | 🔄 **Started** — Chronos-Bolt-small + Chronos-2 + 7 classical models on 26 series (22 + 4 more; macro excluded: no post-release data). Post-release skill and the contamination gap run; results in the log (**preliminary**). **Tuned baselines run (25 series, 2026-11-27): Chronos-2 −0.453, Bolt-small −0.332 vs best tuned classical AutoTheta −0.035 — lead unchanged.** Still missing: more foundation models (TimesFM), probabilistic metrics |
-| 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 75% | 7.5% | 🔄 **First corrected answer (26 series, 2026-11-25): no leakage signature** — mean difference-in-differences is negative or ≈0 for both models, all intervals include 0 except a tiny FX effect; typical (median) series ≈ −0.03. Left: robustness (window-level bootstrap, event pages), tuned baselines, write-up |
+| 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 85% | 8.5% | 🔄 **First corrected answer (26 series, 2026-11-25): no leakage signature** — mean difference-in-differences is negative or ≈0 for both models, all intervals include 0 except a tiny FX effect; typical (median) series ≈ −0.03. **Robustness (2026-11-27, series-level checks): null result holds** — FX-as-one-cluster, leave-one-out, other reference definitions, event pages split out; only hourly electricity (n=2) is positive. Left: window-level block bootstrap (needs Colab re-run, cell 4e), write-up |
 | 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 0% | 0% | ⬜ Not started |
 | 8 | Paper writing (8 sections) | 15% | 0% | 0% | ⬜ Not started |
 | 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 0% | 0% | ⬜ Not started |
-| | **Total** | **100%** | | **57% (shown as 57%)** | |
+| | **Total** | **100%** | | **58% (shown as 58%)** | |
 
 Overall % = sum of (weight × done). Update the "Done" column when a phase moves, then recompute.
 
@@ -33,7 +33,7 @@ Overall % = sum of (weight × done). Update the "Done" column when a phase moves
 5. ~~Run Chronos on Colab (Phase 4)~~ ✅ done 2026-11-25 (post-release run). Chronos's training cutoff is not published, so we use each model's **release date** as a conservative cutoff (verify dates first).
 6. ~~First contamination-gap runs (RQ2)~~ ✅ 6-series and 22-series runs done, see log. The 22-series run is **confounded by context length** (fixed in code).
 7. ~~Corrected contamination-gap run~~ ✅ 2026-11-25 (26 series): **null result**, see log. The 22-series run and the 6-series run are superseded.
-8. **Next:** (a) ~~run the tuned-baseline comparison on Colab~~ ✅ done 2026-11-27: tuned baselines do not change the picture (save the CSVs when re-run); (b) robustness of the gap: window-level (block) bootstrap instead of over-series only, report event-driven Wikipedia pages separately, per-model vs global cutoff; (c) add TimesFM 2.5 (second model family) if it installs on Colab; (d) ~~save the Colab result CSVs into the repo~~ ✅ done: `results/gap_fixed/`; (e) **start the paper skeleton** (Phase 8) around the null-result framing; (f) confirm release dates + data licences.
+8. **Next:** (a) ~~run the tuned-baseline comparison on Colab~~ ✅ done 2026-11-27: tuned baselines do not change the picture (save the CSVs when re-run); (b) robustness of the gap: ✅ series-level checks done (`forecastclean robust`); **open: window-level block bootstrap — run notebook cell 4e on Colab (~1 h)**; per-model vs global cutoff; (c) add TimesFM 2.5 (second model family) if it installs on Colab; (d) ~~save the Colab result CSVs into the repo~~ ✅ done: `results/gap_fixed/`; (e) **start the paper skeleton** (Phase 8) around the null-result framing; (f) confirm release dates + data licences.
 
 ### 🚦 Go / no-go gates
 - End of Phase 4: no foundation model runs at all → fall back to an all-classical + deep-baseline study of *evaluation-protocol sensitivity*.
@@ -43,7 +43,7 @@ Overall % = sum of (weight × done). Update the "Done" column when a phase moves
 - Verified (27 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
 - Verified on real weights (Colab, 2026-11-25): the Chronos adapter for Bolt-tiny, Bolt-small and Chronos-2.
 - **Preliminary only:** all foundation-model results (untuned ARIMA/ETS, release-date cutoffs rather than published training cutoffs, bootstrap over series treats correlated series — EUR crosses, Wikipedia pages — as independent, so intervals are too narrow).
-- **Not verified:** release dates at the primary model cards; licences of the data sources; robustness of the null result to a window-level bootstrap.
+- **Not verified:** release dates at the primary model cards; licences of the data sources; robustness of the null result to a window-level bootstrap (code + tests ready, not yet run on real windows).
 
 ---
 

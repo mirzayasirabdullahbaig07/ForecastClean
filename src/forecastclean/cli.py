@@ -24,6 +24,8 @@ def main(argv=None):
     g.add_argument("--max-origins", type=int, default=60); g.add_argument("--eval-start", default="2015-01-01")
     g.add_argument("--drop", nargs="*", help="skip slow classical models, e.g. --drop arima")
     g.add_argument("--tuned", action="store_true", help="add tuned baselines (needs statsforecast); the classical median then includes them")
+    rb = sub.add_parser("robust", help="robustness checks of the contamination gap, from a results folder written by `forecastclean gap`")
+    rb.add_argument("--dir", default="results/gap"); rb.add_argument("--block", type=int, default=5, help="block length (origins) of the window-level bootstrap")
     r = sub.add_parser("run", help="Evaluate on YOUR csv (columns: date,value)")
     r.add_argument("--csv", required=True); r.add_argument("--date-col", default="date"); r.add_argument("--value-col", default="value")
     r.add_argument("--h", type=int, default=12); r.add_argument("--season", type=int, default=1)
@@ -38,6 +40,9 @@ def main(argv=None):
     if args.cmd == "gap":
         from .gap import run_gap
         return run_gap(args)
+    if args.cmd == "robust":
+        from .robustness import run_robust
+        return run_robust(args)
     if args.cmd == "download":
         from .data import download_all
         return download_all(args.out, args.only, args.fred_vintage)

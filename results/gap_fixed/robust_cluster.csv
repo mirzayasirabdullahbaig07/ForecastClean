@@ -1,0 +1,3 @@
+chronos,n_units,mean_did,ci_lo,ci_hi
+chronos-2,17,-0.1004,-0.2509,0.0458
+chronos-bolt-small,17,-0.2391,-0.4989,0.0206

@@ -28,7 +28,7 @@ def _rel(res: pd.DataFrame) -> pd.Series:
 
 
 def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origins=60, max_context=1024,
-                   eval_start="2015-01-01", min_windows=5, drop=(), tuned=False):
+                   eval_start="2015-01-01", min_windows=5, drop=(), tuned=False, collect=None):
     """Return (rows, summary) or (None, reason). rows: one line per model x period."""
     fc = {k: v for k, v in BASELINES.items() if k not in drop}; fc[chronos_name] = chronos_fc   # drop: skip slow models
     if tuned:
@@ -44,6 +44,8 @@ def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origin
     n_pre = pre.origin.nunique() if len(pre) else 0; n_post = post.origin.nunique() if len(post) else 0
     if n_pre < min_windows or n_post < min_windows:
         return None, f"pre windows={n_pre}, post windows={n_post} (< {min_windows})"
+    if collect is not None:      # per-window MASE, so a window-level (block) bootstrap is possible without re-running models
+        collect.append(pd.concat([pre.assign(period="pre"), post.assign(period="post")])[["origin", "model", "mase", "period"]])
     rp, rq = _rel(pre), _rel(post)
     rows = pd.DataFrame({"rel_pre": rp, "rel_post": rq}).drop(index="naive")
     rows["gap"] = np.log(rows.rel_post) - np.log(rows.rel_pre)
@@ -82,7 +84,7 @@ def run_gap(args) -> int:
     names = args.only or [n for n in SERIES if (data / f"{n}.csv").exists()]
     if not names:
         print(f"No series found in {data}. Run `forecastclean download` first."); return 1
-    allrows, sums = [], []
+    allrows, sums, wins = [], [], []
     for mid in args.chronos:
         short = mid.split("/")[-1]; rel = RELEASE[short][0]                   # KeyError = unknown model: never guess a date
         fcm = chronos_forecaster(mid)
@@ -92,16 +94,18 @@ def run_gap(args) -> int:
             df = pd.read_csv(data / f"{n}.csv", parse_dates=["date"]).sort_values("date")
             ser = df.set_index("date")["value"].astype(float); h = H_BY_FREQ[freq]
             rows, info = gap_for_series(ser, season, h, short, fcm, rel, args.max_origins, args.max_context, args.eval_start,
-                                         drop=tuple(args.drop or ()), tuned=args.tuned)
+                                         drop=tuple(args.drop or ()), tuned=args.tuned, collect=(cl := []))
             if rows is None:
                 print(f"   {n}: skipped ({info})"); continue
             rows.insert(0, "series", n); rows["h"] = h; allrows.append(rows)
+            wins.append(pd.concat(cl).assign(series=n, chronos=short, h=h))
             info.update(series=n, h=h); sums.append(info)
             print(f"   {n} (h={h}): Chronos gap {info['gap_chronos']:+.3f}, classical gap {info['gap_classical']:+.3f}, "
                   f"DiD {info['did']:+.3f}  (pre {info['n_pre']}, post {info['n_post']} windows)", flush=True)
     if not sums:
         print("No series had enough windows both before and after the release date."); return 1
     pd.concat(allrows).round(4).to_csv(out / "gap_windows.csv", index=False)
+    pd.concat(wins).round(5).to_csv(out / "gap_origins.csv", index=False)   # per-window MASE (input of robustness.block_did)
     summ = pd.DataFrame(sums); summ.round(4).to_csv(out / "gap_summary.csv", index=False)
     agg = aggregate(summ); agg.round(4).to_csv(out / "gap_aggregate.csv", index=False)
     print("\nContamination gap (DiD > 0 = model lost MORE than classical models after its release; 95% bootstrap over series):")
