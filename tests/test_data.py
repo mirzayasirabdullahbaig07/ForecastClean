@@ -233,3 +233,43 @@ def test_gap_aggregate_has_overall_and_group_rows():
                          "did": [0.0, 0.1, -0.2, 0.3]})
     a = aggregate(summ, n_boot=200).set_index("group")
     assert set(a.index) == {"all", "fx", "wikipedia", "electricity"} and a.loc["all", "n_series"] == 4 and a.loc["fx", "n_positive"] == 1
+
+
+def test_tuned_models_selection_rule_and_outputs():
+    """AutoARIMA only on non-seasonal series (too slow otherwise); the tuned forecasters return finite length-h vectors."""
+    pytest = __import__("pytest"); pytest.importorskip("statsforecast")
+    from forecastclean.models import tuned_models, auto_ets, auto_theta, auto_arima
+    assert set(tuned_models(1)) == {"auto_ets", "auto_theta", "auto_arima"} and set(tuned_models(7)) == {"auto_ets", "auto_theta"}
+    from forecastclean.synthetic import seasonal_series
+    y = seasonal_series(n=240, season=12, seed=3).to_numpy()
+    for f in (auto_ets, auto_theta, auto_arima):
+        out = f(y, 6, 12)
+        assert out.shape == (6,) and np.all(np.isfinite(out))
+    # sanity: tuned ETS must beat naive on a strongly seasonal series
+    tr, te = y[:-12], y[-12:]
+    assert np.mean(np.abs(auto_ets(tr, 12, 12) - te)) < np.mean(np.abs(np.repeat(tr[-1], 12) - te))
+
+
+def test_auto_forecaster_falls_back_to_naive_when_the_fit_fails():
+    from forecastclean import models
+    out = models._auto("DoesNotExist", np.array([1.0, 2.0, 3.0]), 4, 1)
+    assert out.tolist() == [3.0, 3.0, 3.0, 3.0]
+
+
+def test_gap_with_tuned_baselines_adds_auto_rows():
+    pytest = __import__("pytest"); pytest.importorskip("statsforecast")
+    from forecastclean.gap import gap_for_series
+    from forecastclean.models import naive
+    idx = pd.date_range("2018-01-01", periods=900, freq="D")
+    s = pd.Series(np.random.default_rng(1).normal(size=900).cumsum() + 100, index=idx)
+    rows, info = gap_for_series(s, 1, 5, "m", naive, "2020-06-01", max_origins=8, max_context=300, eval_start="2018-01-01",
+                                min_windows=3, drop=("arima", "comb", "ets", "theta"), tuned=True)
+    assert rows is not None and {"auto_ets", "auto_theta", "auto_arima"} <= set(rows.model)
+
+
+def test_across_series_ranking_excludes_models_missing_on_some_series():
+    from forecastclean.batch import _complete_models
+    m = pd.DataFrame({"naive": [0.0, 0.0, 0.0], "ets": [-0.2, -0.1, -0.3], "auto_arima": [0.0, np.nan, np.nan]},
+                     index=["fx", "wiki", "neso"])
+    full, partial = _complete_models(m)
+    assert list(full.columns) == ["naive", "ets"] and partial == ["auto_arima"]

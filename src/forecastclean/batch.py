@@ -8,7 +8,7 @@ import pandas as pd
 
 from .data import SERIES
 from .evaluate import evaluate, skill_table
-from .models import BASELINES
+from .models import BASELINES, tuned_models
 from .stability import across_series_stability, holm, ranking_stability
 
 H_BY_FREQ = {"M": 6, "D": 14, "H": 24, "B": 10}
@@ -24,6 +24,13 @@ def _kendall_between_horizons(tbl: pd.DataFrame) -> list[dict]:
         t = stats.kendalltau(wide[a], wide[b])[0]
         out.append(dict(h_from=a, h_to=b, tau=float(t)))
     return out
+
+
+def _complete_models(mat: pd.DataFrame):
+    """Keep only models scored on EVERY series. A model present on a subset (e.g. AutoARIMA, used on non-seasonal series
+    only) would otherwise be averaged over different series than the others and look artificially good or bad."""
+    full = mat.dropna(axis=1, how="any")
+    return full, [c for c in mat.columns if c not in full.columns]
 
 
 def run_batch(args) -> int:
@@ -55,7 +62,7 @@ def run_batch(args) -> int:
         print(f"{n}: {len(ser)} obs, last {ser.index[-1].date()}, horizons={hs}, season={season}", flush=True)
         per_series = []
         for k, h in enumerate(hs):
-            res = evaluate(ser, fc, h=h, season=season, max_context=args.max_context,
+            res = evaluate(ser, {**fc, **(tuned_models(season) if getattr(args, "tuned", False) else {})}, h=h, season=season, max_context=args.max_context,
                            max_origins=args.max_origins, eval_start=eval_start)
             if len(res) == 0:
                 print(f"   h={h}: no windows after {eval_start} -> skipped"); continue
@@ -79,7 +86,9 @@ def run_batch(args) -> int:
     sel = summ[summ.period.isin(["all", "post_cutoff"])]
     for h_key, g in [(None, sel)] if not getattr(args, "horizon_sweep", False) else sel.groupby("h_idx"):
         mat = g.pivot_table(index="series", columns="model", values="rel_mase")
-        mat = np.log(mat.replace(0, np.nan)).dropna(axis=1, how="all")
+        mat, partial = _complete_models(np.log(mat.replace(0, np.nan)))
+        if partial:
+            print(f"   (not ranked across series, missing on some series: {', '.join(partial)})")
         cs = across_series_stability(mat)
         print(f"\n[{'all horizons' if h_key is None else f'horizon position {h_key} (0=shortest)'}] mean log-relative MASE across {cs['n_units']} series (lower = better):\n",
               mat.mean().sort_values().round(3).to_string())

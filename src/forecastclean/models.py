@@ -97,5 +97,42 @@ def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="auto", pipel
     return f
 
 
+# ---------- tuned (automatically selected) baselines: statsforecast AutoETS / AutoTheta / AutoARIMA ----------
+# Untuned ETS/ARIMA(1,1,1) are the first thing a reviewer attacks, so these select the model form by information
+# criterion on each training window. Optional dependency: `pip install statsforecast`.
+def _auto(model_name, train, h, season):
+    from statsforecast import models as sfm
+    y = np.asarray(train, dtype=float)
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            out = np.asarray(getattr(sfm, model_name)(season_length=max(int(season), 1)).forecast(y=y, h=h)["mean"], dtype=float)
+        return out if out.shape == (h,) and np.all(np.isfinite(out)) else naive(y, h)
+    except Exception:
+        return naive(y, h)                                  # never let one failed fit abort a whole run
+
+
+def auto_ets(train, h, season=1):
+    return _auto("AutoETS", train, h, season)
+
+
+def auto_theta(train, h, season=1):
+    return _auto("AutoTheta", train, h, season)
+
+
+def auto_arima(train, h, season=1):
+    return _auto("AutoARIMA", train, h, season)
+
+
+def tuned_models(season=1) -> dict:
+    """Tuned baselines to add for a series. AutoARIMA is only used for NON-seasonal series: on seasonal ones it needs
+    3-23 s per fit (measured: 1024 daily points, season 7 -> 5 s; 336 hourly points, season 24 -> 23 s), which makes a
+    rolling-origin run impractical on Colab. This limitation must be stated in the paper."""
+    m = {"auto_ets": auto_ets, "auto_theta": auto_theta}
+    if int(season) == 1:
+        m["auto_arima"] = auto_arima
+    return m
+
+
 BASELINES = {"naive": naive, "seasonal_naive": seasonal_naive, "drift": drift, "ets": ets, "arima": arima,
              "theta": theta, "comb": comb}

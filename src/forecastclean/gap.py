@@ -16,7 +16,7 @@ import pandas as pd
 
 from .data import SERIES
 from .evaluate import evaluate
-from .models import BASELINES
+from .models import BASELINES, tuned_models
 from .batch import H_BY_FREQ
 
 CLASSICAL = [m for m in BASELINES if m != "naive"]
@@ -28,9 +28,11 @@ def _rel(res: pd.DataFrame) -> pd.Series:
 
 
 def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origins=60, max_context=1024,
-                   eval_start="2015-01-01", min_windows=5, drop=()):
+                   eval_start="2015-01-01", min_windows=5, drop=(), tuned=False):
     """Return (rows, summary) or (None, reason). rows: one line per model x period."""
     fc = {k: v for k, v in BASELINES.items() if k not in drop}; fc[chronos_name] = chronos_fc   # drop: skip slow models
+    if tuned:
+        fc.update(tuned_models(season))                       # AutoETS/AutoTheta (+AutoARIMA when non-seasonal)
     r = pd.Timestamp(release)
     # Every window, before and after, must see the SAME context length (min_train = max_context). Otherwise early pre-release
     # windows (short history) would penalise long-context models and bias the gap (found on the first 22-series run).
@@ -47,7 +49,7 @@ def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origin
     rows["gap"] = np.log(rows.rel_post) - np.log(rows.rel_pre)
     rows = rows.reset_index(names="model"); rows["chronos"] = chronos_name; rows["n_pre"] = n_pre; rows["n_post"] = n_post
     g_c = float(rows.loc[rows.model == chronos_name, "gap"].iloc[0])
-    g_cl = float(rows.loc[rows.model.isin([m for m in CLASSICAL if m not in drop]), "gap"].median())   # median: untuned ARIMA swings wildly
+    g_cl = float(rows.loc[rows.model.isin([m for m in rows.model if m != chronos_name]), "gap"].median())   # median: untuned ARIMA swings wildly
     return rows, dict(chronos=chronos_name, gap_chronos=g_c, gap_classical=g_cl, did=g_c - g_cl, n_pre=n_pre, n_post=n_post)
 
 
@@ -90,7 +92,7 @@ def run_gap(args) -> int:
             df = pd.read_csv(data / f"{n}.csv", parse_dates=["date"]).sort_values("date")
             ser = df.set_index("date")["value"].astype(float); h = H_BY_FREQ[freq]
             rows, info = gap_for_series(ser, season, h, short, fcm, rel, args.max_origins, args.max_context, args.eval_start,
-                                         drop=tuple(args.drop or ()))
+                                         drop=tuple(args.drop or ()), tuned=args.tuned)
             if rows is None:
                 print(f"   {n}: skipped ({info})"); continue
             rows.insert(0, "series", n); rows["h"] = h; allrows.append(rows)
