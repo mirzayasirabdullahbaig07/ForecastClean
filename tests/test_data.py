@@ -251,6 +251,7 @@ def test_tuned_models_selection_rule_and_outputs():
 
 
 def test_auto_forecaster_falls_back_to_naive_when_the_fit_fails():
+    __import__("pytest").importorskip("statsforecast")     # _auto imports it first; only the FIT failing falls back to naive
     from forecastclean import models
     out = models._auto("DoesNotExist", np.array([1.0, 2.0, 3.0]), 4, 1)
     assert out.tolist() == [3.0, 3.0, 3.0, 3.0]
