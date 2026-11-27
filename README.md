@@ -7,7 +7,7 @@ Repo: https://github.com/mirzayasirabdullahbaig07/ForecastClean · Local: `C:\Us
 
 ## 📊 Project progress — where we are right now
 
-**Overall: 58% ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ (target: research-paper preprint)**
+**Overall: 62% ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ (target: research-paper preprint)**
 _Last updated: 2026-11-27 · Current phases: **Phase 5 — main experiments** (first Chronos results logged in [`EXPERIMENT_LOG.md`](EXPERIMENT_LOG.md)), plus **Phase 2 — Literature** ([`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** ([`DATA_SOURCES.md`](DATA_SOURCES.md)) to finish_
 
 | # | Phase | Weight | Done | Contribution | Status |
@@ -19,9 +19,9 @@ _Last updated: 2026-11-27 · Current phases: **Phase 5 — main experiments** (f
 | 5 | Main experiments (all models × series × horizons) | 20% | 50% | 10% | 🔄 **Started** — Chronos-Bolt-small + Chronos-2 + 7 classical models on 26 series (22 + 4 more; macro excluded: no post-release data). Post-release skill and the contamination gap run; results in the log (**preliminary**). **Tuned baselines run (25 series, 2026-11-27): Chronos-2 −0.453, Bolt-small −0.332 vs best tuned classical AutoTheta −0.035 — lead unchanged.** Still missing: more foundation models (TimesFM), probabilistic metrics |
 | 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 85% | 8.5% | 🔄 **First corrected answer (26 series, 2026-11-25): no leakage signature** — mean difference-in-differences is negative or ≈0 for both models, all intervals include 0 except a tiny FX effect; typical (median) series ≈ −0.03. **Robustness (2026-11-27, series-level checks): null result holds** — FX-as-one-cluster, leave-one-out, other reference definitions, event pages split out; only hourly electricity (n=2) is positive. Left: window-level block bootstrap (needs Colab re-run, cell 4e), write-up |
 | 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 0% | 0% | ⬜ Not started |
-| 8 | Paper writing (8 sections) | 15% | 0% | 0% | ⬜ Not started |
+| 8 | Paper writing (8 sections) | 15% | 25% | 3.75% | 🔄 **Draft v0.1 written (2026-11-27)** — all 8 sections in [`paper/PAPER.md`](paper/PAPER.md) with Figure 1, built only from results we have; related-work citations still to be verified; several numbers pending (see its "Open items") |
 | 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 0% | 0% | ⬜ Not started |
-| | **Total** | **100%** | | **58% (shown as 58%)** | |
+| | **Total** | **100%** | | **62% (61.75%, shown as 62%)** | |
 
 Overall % = sum of (weight × done). Update the "Done" column when a phase moves, then recompute.
 
