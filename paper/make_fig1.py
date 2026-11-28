@@ -1,4 +1,4 @@
-"""Figure 1 of the paper: mean log-relative MASE vs naive (RQ1, 25 series, windows after 2025-10-31).
+"""Figure 2 of the paper: mean log-relative MASE vs naive (RQ1, 25 series, windows after 2025-10-31).
 Values are read from results/chronos_post_tuned3/RESULT_TABLE.md (transcribed from the printed table, saved in RESULT_TABLE.md).
 Run from the repo root:  python paper/make_fig1.py
 """

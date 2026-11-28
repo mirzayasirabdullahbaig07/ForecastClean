@@ -3,8 +3,8 @@ message: "If you use this software or its results, please cite it as below."
 title: "ForecastClean: leakage-aware rolling-origin evaluation of classical vs foundation forecasters"
 type: software
 authors:
-  - family-names: "Fiaz"
-    given-names: "Syeda Faiqa"
+  - family-names: "Baig"
+    given-names: "Mirza Yasir Abdullah"
 version: "0.2.0"
 date-released: "2026-11-28"
 license: MIT

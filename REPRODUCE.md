@@ -25,7 +25,7 @@ forecastclean download                    # data/raw/*.csv + data/MANIFEST.csv (
 
 | Result folder | Command | Time (laptop CPU) |
 |---|---|---|
-| `results/chronos_post_tuned3` (RQ1, Table 1, Figure 1) | `forecastclean batch --chronos amazon/chronos-bolt-small amazon/chronos-2 google/timesfm-2.5-200m-pytorch --release-cutoff --post-only --max-origins 30 --tuned --only <the 25 series, see RESULT_TABLE.md> --out results/chronos_post_tuned3` | about 3 to 5 h |
+| `results/chronos_post_tuned3` (RQ1, Table 1, Figure 2) | `forecastclean batch --chronos amazon/chronos-bolt-small amazon/chronos-2 google/timesfm-2.5-200m-pytorch --release-cutoff --post-only --max-origins 30 --tuned --only <the 25 series, see RESULT_TABLE.md> --out results/chronos_post_tuned3` | about 3 to 5 h |
 | `results/gap_blocks` (RQ2, Tables 2 and 3) | `forecastclean gap --chronos amazon/chronos-bolt-small amazon/chronos-2 google/timesfm-2.5-200m-pytorch --max-origins 20 --drop arima --out results/gap_blocks` then `forecastclean robust --dir results/gap_blocks --block 5` | under 1 h |
 | `results/gap_fixed` (RQ2, 40-origin run, Chronos only) | see `results/gap_fixed/RUN_INFO.md` | Colab T4, about 1 h |
 | `results/gap_preend` (pre-period ending 2023-12-31; Table 4b) | `forecastclean gap --chronos google/timesfm-2.5-200m-pytorch amazon/chronos-bolt-small amazon/chronos-2 --max-origins 1000 --match-days 365 --pre-end 2023-12-31 --drop arima --only wiki_Christmas wiki_Easter wiki_Halloween wiki_Thanksgiving wiki_Wimbledon wiki_SuperBowl wiki_Ramadan wiki_Eurovision --out results/gap_preend` then `forecastclean robust --dir results/gap_preend` | short |
@@ -36,7 +36,8 @@ forecastclean download                    # data/raw/*.csv + data/MANIFEST.csv (
 
 ```bash
 python paper/make_tables.py     # Table 1 (skill by group), Table 3 (stable subset), run-to-run agreement
-python paper/make_fig1.py       # Figure 1
+python paper/make_fig1.py       # Figure 2 (the skill bar chart)
+python paper/make_figs.py       # Figures 1 and 3-7
 ```
 
 ## Data

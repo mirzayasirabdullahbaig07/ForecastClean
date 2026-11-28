@@ -102,4 +102,4 @@ git push
 Update the progress table above whenever a phase moves, and commit it together with the work.
 
 ## 8. Reproducing the paper
-See [`REPRODUCE.md`](REPRODUCE.md) (environment, exact commands per result folder, how to regenerate tables and Figure 1). Licence: MIT (`LICENSE`); how to cite: `CITATION.cff`.
+See [`REPRODUCE.md`](REPRODUCE.md) (environment, exact commands per result folder, how to regenerate tables and the figures). Licence: MIT (`LICENSE`); how to cite: `CITATION.cff`.

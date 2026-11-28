@@ -55,6 +55,10 @@ Table 0. How this paper differs from the two closest works.
 
 Every number in this paper comes from rolling-origin forecasts scored against naive, with the same context length for every window and a cutoff date for every model.
 
+![Figure 1](figures/fig2_protocol.png)
+
+*Figure 1. Evaluation protocol. Regenerate all figures with `python paper/make_figs.py`.*
+
 **Windows.** For each series we take forecast origins at evenly spaced positions. A forecaster sees only the observations before the origin, and the code asserts this. Every window uses the last 1024 observations as context (a minimum and a maximum), so early windows cannot be penalised for having less history. The horizon is fixed per frequency: 10 steps for business-daily exchange rates, 14 for daily series, 24 for hourly series.
 
 **Metric.** Errors are MASE, scaled by the in-sample seasonal-naive error of the context (season 1 for exchange rates, 7 for daily, 24 for hourly). Skill is the ratio of mean MASE to the mean MASE of naive, and we report the mean of its logarithm across series. A value of −0.453 means the model's error is about 36% below naive in the geometric sense; 0 means no better than naive.
@@ -101,9 +105,9 @@ The event pages were fixed in code before any per-page results were examined.
 
 On 25 series and windows that start after 31 Oct 2025, all three foundation models beat every classical method, tuned or not. Mean log-relative MASE against naive is −0.470 for TimesFM 2.5, −0.453 for Chronos-2 and −0.332 for Chronos-Bolt-small, which is about 37%, 36% and 28% lower error. The best classical methods score −0.036 (Theta) and −0.035 (AutoTheta), about 4% below naive, and AutoETS scores −0.006. Tuning does not change the picture: AutoTheta is no better than untuned Theta, and AutoETS is only slightly better than untuned ETS.
 
-![Figure 1](figures/fig1_rq1_skill.png)
+![Figure 2](figures/fig1_rq1_skill.png)
 
-*Figure 1. Mean log-relative MASE vs naive, 25 series, laptop run of 2026-11-28 (`results/chronos_post_tuned3/`). AutoARIMA not ranked. Regenerate with `python paper/make_fig1.py`.*
+*Figure 2. Mean log-relative MASE vs naive, 25 series, laptop run of 2026-11-28 (`results/chronos_post_tuned3/`). AutoARIMA not ranked. Regenerate with `python paper/make_fig1.py`.*
 
 TimesFM 2.5 and Chronos-2 are close (−0.470 vs −0.453), and we do not claim one is better. TimesFM is slightly ahead of Chronos-2 on the Wikipedia pages (Table 1), the same direction that Moghadasi and Ghaderi report, but the difference is small and rests on 14 pages. The ranking is moderately stable: across resamples of origins and series the best model stays the best with probability 0.69, and the mean Kendall tau between resampled rankings is 0.77. This is lower than in the Chronos-only run, which is what one expects when two models are nearly tied at the top.
 
@@ -118,9 +122,17 @@ TimesFM 2.5 and Chronos-2 are close (−0.470 vs −0.453), and we do not claim 
 
 On the ten exchange-rate series every model is within about 0.06 of naive, and Chronos-Bolt-small is slightly worse than naive. This matches an earlier finding that methods tie on exchange rates (Moghadasi and Ghaderi 2026). The headline gain therefore comes from the 15 non-FX series, and the largest gains are on pages with strong yearly or weekly calendar structure (Halloween, Thanksgiving, Christmas), which is where a model that has seen many similar series should help most. The ten EUR pairs also share a currency, so the effective number of independent series is smaller than 25, and electricity is a single series.
 
+![Figure 3](figures/fig4_skill_by_group.png)
+
+*Figure 3. Mean log-relative MASE vs naive by data group and method (values as in Table 1).*
+
 ### 5.2 The contamination gap (RQ2)
 
 We ran the gap twice: once with up to 40 pre-release and 40 post-release origins per series for the two Chronos models (`results/gap_fixed/`, 2026-11-25), and once with 20 origins per period for all three models (`results/gap_blocks/`, laptop, 2026-11-28). A positive difference-in-differences (DiD) means the model lost more skill after its release than classical models did. Neither run shows a consistent leakage signature: no model has a positive mean DiD across the 26 series.
+
+![Figure 4](figures/fig3_timeline.png)
+
+*Figure 4. Release dates, the clean period and the 2023 pre-period used in Table 4b. The late-2023 corpus end of TimesFM is as cited by Moghadasi and Ghaderi.*
 
 Table 2. DiD, 20-origin run, 26 series, 95% interval bootstrapped over series.
 
@@ -171,6 +183,10 @@ Table 4b. Same eight pages with the pre-period moved to the 365 days ending 2023
 
 Moving the pre-period to 2023 changes the means by less than 0.07 for every model. The sign stays negative, the page-level interval excludes 0, and the block-bootstrap intervals for Chronos-2 and TimesFM include 0. So the result does not depend on whether the pre-period is in 2023 or in the year before release, and it gives no leakage signature on these pages. It also does not explain the negative sign: the foundation models do better after release than before, relative to classical models, on pages with strong yearly events. We have not isolated the cause (a change in the pageview regime after 2023 and calendar phase are candidates).
 
+![Figure 5](figures/fig5_did_forest.png)
+
+*Figure 5. Mean DiD and 95% interval over series in three designs (Table 2, Table 4, Table 4b). Values left of the line mean the foundation model lost less skill after release than classical models did.*
+
 **Hourly electricity.** The hourly series has a positive DiD for Chronos-2 in both runs (+0.31 and +0.17) and for TimesFM 2.5 in the one run that includes it (+0.33); for Chronos-Bolt-small it is +0.21 and −0.01. It is one series, so we cannot separate leakage from a change in demand patterns (Section 6). The saved window results (`results/gap_blocks/gap_windows.csv`, 20 origins per period) let us bound it:
 
 Table 4c. Hourly electricity, relative MASE (vs naive) before and after release, Chronos-2 run.
@@ -184,6 +200,10 @@ Table 4c. Hourly electricity, relative MASE (vs naive) before and after release,
 | ETS | 0.716 | 0.676 | −0.058 |
 
 Two things follow. First, after release Chronos-2 is still far ahead of every classical method (0.28 against 0.43 for the best of them); the DiD is a shrinking margin inside a large lead, not a loss of skill. TimesFM shows the same pattern (0.34 after release against 0.40 for Theta), and Chronos-Bolt-small is 0.26 against 0.42. Second, seasonal naive and Theta move the same way (+0.19 and +0.15), so the series became less predictable for everything that relies on the daily cycle, and a foundation model starting from a very low relative error has the most to lose in log terms. This is consistent with a regime change in demand and is not evidence of leakage, but one series cannot settle it.
+
+![Figure 6](figures/fig7_hourly.png)
+
+*Figure 6. Hourly electricity, relative MASE before and after release (Table 4c data).*
 
 ### 5.3 Robustness
 
@@ -219,6 +239,10 @@ Table 5. Mean log scaled CRPS relative to the naive reference (lower is better) 
 
 The probabilistic result matches the point result: the three foundation models are far ahead of the classical references, Chronos-2 and TimesFM 2.5 are nearly tied, and on exchange rates nobody beats the random-walk reference. Calibration differs. TimesFM 2.5 and Chronos-Bolt-small are slightly too wide (0.836), the classical references are close to nominal, and Chronos-2 is too narrow (0.751), mostly on the event pages (0.669) and on daily electricity for TimesFM (0.676). The ranking of the three foundation models therefore depends on whether sharpness or calibration is rewarded, and we do not rank them. Moghadasi and Ghaderi report that pretrained models are overconfident in general; in our data that holds for Chronos-2 only.
 
+![Figure 7](figures/fig6_probabilistic.png)
+
+*Figure 7. Scaled CRPS relative to naive and 80% interval coverage (Table 5 data).*
+
 ## 6 Limitations
 
 The null result in Section 5.2 is weaker than it looks, for these reasons.
@@ -249,11 +273,11 @@ This draft uses only results we have. These items would change or strengthen it;
 | Item | Why it matters | How |
 | --- | --- | --- |
 | ~~Save the RQ1 result files and report skill by data group~~ | Done 2026-11-28 (`results/chronos_post_tuned3/`, Table 1). | Claude |
-| Release dates: checked on 27 Nov 2026, done | The cutoff is the central assumption of RQ2. | Claude, then Faiqa checks |
-| Read the two key papers in full and fix Section 2 | Claude read both in full on 2026-11-28 (`READING_NOTES.md`); the author still skims them. | Faiqa |
+| Release dates: checked on 27 Nov 2026, done | The cutoff is the central assumption of RQ2. | Claude, then author checks |
+| Read the two key papers in full and fix Section 2 | Claude read both in full on 2026-11-28 (`READING_NOTES.md`); the author still skims them. | Author |
 | ~~Add TimesFM 2.5 and the block bootstrap to RQ2~~ | Done 2026-11-28 (`results/gap_blocks/`). | Claude |
 | ~~Calendar-matched event-page gap and probabilistic evaluation~~ | Done 2026-11-28 (`results/gap_matched/`, `results/prob/`). | Claude |
 | ~~Explain or bound the electricity result~~ | Bounded 2026-11-28 with Table 4c (not explained: one series). | Claude |
-| Open each licence link once and confirm | Terms were looked up on 2026-11-28 (`DATA_SOURCES.md`); the author confirms. | Faiqa |
-| Confirm the gap statement with the supervisor | The post-release idea is crowded. | Faiqa |
-| Figures and venue formatting | Draft has one planned figure. | Claude, after the numbers are final |
+| Open each licence link once and confirm | Terms were looked up on 2026-11-28 (`DATA_SOURCES.md`); the author confirms. | Author |
+| Confirm the gap statement with the supervisor | The post-release idea is crowded. | Author |
+| Figures and venue formatting | Figures 1–7 and Tables 0–5 are in; venue template not applied. | Author, once the venue is chosen |
