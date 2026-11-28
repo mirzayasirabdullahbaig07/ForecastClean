@@ -1,0 +1,4 @@
+chronos,n_series,mean_did,ci_lo,ci_hi,block
+chronos-2,8,-0.415,-0.6078,0.079,5
+chronos-bolt-small,8,-0.4114,-0.6752,-0.0182,5
+timesfm-2.5-200m-pytorch,8,-0.4024,-0.7418,0.0598,5

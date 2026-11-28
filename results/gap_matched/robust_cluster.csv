@@ -1,0 +1,4 @@
+chronos,n_units,mean_did,ci_lo,ci_hi
+chronos-2,9,,,
+chronos-bolt-small,9,,,
+timesfm-2.5-200m-pytorch,9,,,

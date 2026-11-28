@@ -10,3 +10,5 @@ data/raw/
 !results/chronos_post_tuned3/
 !results/gap_blocks/
 *.zip
+!results/gap_matched/
+!results/prob/

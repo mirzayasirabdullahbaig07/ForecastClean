@@ -1,0 +1,7 @@
+model,ECB FX (10),Electricity daily (1),Wikipedia event pages (8),Wikipedia other (6)
+chronos-2,0.808,0.794,0.669,0.757
+chronos-bolt-small,0.814,0.725,0.909,0.793
+naive_q,0.841,0.742,0.821,0.701
+seasonal_naive_q,0.841,0.832,0.789,0.772
+theta_q,0.836,0.821,0.818,0.77
+timesfm-2.5-200m-pytorch,0.837,0.676,0.894,0.784

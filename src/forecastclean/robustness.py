@@ -64,7 +64,8 @@ def cluster_boot(summary: pd.DataFrame, n_boot=4000, seed=0) -> pd.DataFrame:
     """All-series mean DiD, but the FX pairs are averaged into one unit first (they are not independent)."""
     rng = np.random.default_rng(seed); s = summary.copy(); s["group"] = _group(s.series); rows = []
     for c, g in s.groupby("chronos"):
-        units = list(g[g.group != "fx"].did) + [g[g.group == "fx"].did.mean()]
+        fx = g[g.group == "fx"].did
+        units = list(g[g.group != "fx"].did) + ([float(fx.mean())] if len(fx) else [])      # no FX rows (e.g. an event-page subset): no empty unit -> no NaN
         lo, hi = _ci(units, n_boot, rng)
         rows.append(dict(chronos=c, n_units=len(units), mean_did=float(np.mean(units)), ci_lo=lo, ci_hi=hi))
     return pd.DataFrame(rows)

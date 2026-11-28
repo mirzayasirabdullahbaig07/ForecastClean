@@ -96,3 +96,11 @@ def test_match_days_restricts_both_periods_to_the_same_calendar_span():
     pre = dates[(c.period == "pre").to_numpy()]; post = dates[(c.period == "post").to_numpy()]
     assert pre.min() >= rel - pd.Timedelta(days=md) and post.max() + pd.Timedelta(days=6) <= rel + pd.Timedelta(days=md)
     assert abs(info["n_pre"] - info["n_post"]) <= 2 and info["n_pre"] >= 25
+
+
+def test_cluster_boot_has_no_nan_when_a_subset_contains_no_fx_series():
+    import pandas as pd
+    from forecastclean import robustness as rb
+    s = pd.DataFrame({"chronos": "m", "series": [f"wiki_{k}" for k in "ABCDEF"], "did": [-0.4, -0.1, 0.2, -0.3, -0.6, 0.1]})
+    out = rb.cluster_boot(s, n_boot=200)
+    assert int(out.n_units.iloc[0]) == 6 and out.mean_did.notna().all() and out.ci_lo.notna().all()

@@ -30,3 +30,14 @@ t3 = pd.DataFrame(rows); t3.to_csv(root / "results/gap_blocks/stable_subset.csv"
 a = pd.read_csv(root / "results/gap_fixed/gap_summary.csv"); b = pd.read_csv(root / "results/gap_blocks/gap_summary.csv")
 m = a.merge(b, on=["chronos", "series"], suffixes=("_40", "_20"))
 print(m.groupby("chronos").apply(lambda g: g.did_40.corr(g.did_20), include_groups=False).round(2).rename("corr of per-series DiD, 40 vs 20 origins").to_string())
+
+# Table 5: probabilistic accuracy (scaled CRPS relative to naive_q, log; and 80% coverage) by group
+p = pd.read_csv(root / "results/prob/prob_summary.csv")
+p["group"] = np.where(p.series.str.startswith("ecb"), "ECB FX (10)", np.where(p.series.str.startswith("neso"), "Electricity daily (1)",
+             np.where(p.series.isin(EVENT), "Wikipedia event pages (8)", "Wikipedia other (6)")))
+p["l"] = np.log(p.rel_scrps)
+crps = p.groupby(["group", "model"]).l.mean().unstack().round(3); cov = p.groupby(["group", "model"]).cov80.mean().unstack().round(3)
+crps.T.to_csv(root / "results/prob/crps_by_group.csv"); cov.T.to_csv(root / "results/prob/coverage_by_group.csv")
+allm = p.groupby("model").agg(mean_log_rel_scrps=("l", "mean"), cov80=("cov80", "mean")).round(3).sort_values("mean_log_rel_scrps")
+allm.to_csv(root / "results/prob/prob_overall.csv")
+print("\nProbabilistic, mean log relative scaled CRPS by group:\n", crps.T.to_string(), "\n\ncoverage:\n", cov.T.to_string(), "\n\noverall:\n", allm.to_string())
