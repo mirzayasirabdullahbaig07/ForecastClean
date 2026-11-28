@@ -1,105 +1,170 @@
-# Project C — ForecastClean
-**Do pretrained time-series foundation models really beat classical forecasters once you evaluate only on data they could not have seen?**
+# ForecastClean
 
-Repo: https://github.com/mirzayasirabdullahbaig07/ForecastClean · Local: `C:\Users\HP\Downloads\ForecastClean`
+**Do pretrained time-series foundation models really beat classical forecasters when they are tested only on data they could not have seen?**
 
----
+Leakage-aware, rolling-origin evaluation of Chronos-Bolt, Chronos-2 and TimesFM 2.5 against classical forecasters on 26 public series.
 
-## 📊 Project progress — where we are right now
+Author: Mirza Yasir Abdullah Baig · Licence: MIT · Status: paper draft v0.5, about **90% of the way to a preprint** · Last updated 2026-11-28
 
-**Overall: 90% ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ (target: research-paper preprint)**
-_Last updated: 2026-11-27 · Current phases: **Phase 5 — main experiments** (first Chronos results logged in [`EXPERIMENT_LOG.md`](EXPERIMENT_LOG.md)), plus **Phase 2 — Literature** ([`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** ([`DATA_SOURCES.md`](DATA_SOURCES.md)) to finish_
-
-| # | Phase | Weight | Done | Contribution | Status |
-|---|---|---:|---:|---:|---|
-| 1 | Framework + tests (rolling origin, MASE, DM test, 5 baselines, CLI) | 15% | 100% | 15% | ✅ Done (6/6 tests pass, `simulate` runs) |
-| 2 | Literature review + gap statement | 10% | 95% | 9.5% | 🔄 **Nearly done** — closest competitor (2609.10357) analysed; new gap **A′** (rolling origins after release dates + horizon sweep) in `LITERATURE.md` §5; release dates found (`LITERATURE.md` §6); the 5 cited papers checked 2026-11-28 against arXiv (2 in full text); **you still read the 2 key papers** |
-| 3 | Choose 6–10 real series (source + licence recorded) | 10% | 95% | 9.5% | 🔄 **Mostly done** — all 9 series downloaded (2026-11-25) and manifest saved; licences looked up 2026-11-28 (`DATA_SOURCES.md`), **author confirms each link once**; macro series end 2025 (see agenda) |
-| 4 | Real-data pipeline + Chronos adapter tested | 10% | 100% | 10% | ✅ **Nearly done** — Chronos-Bolt and Chronos-2 run on real weights (Colab); tuned baselines (AutoETS, AutoTheta, AutoARIMA on non-seasonal series) implemented + tested (`--tuned`), **Colab run done 2026-11-27 (25 series)**; **TimesFM 2.5 adapter: smoke test passed on real weights (Colab, 2026-11-27: 2 series × 5 origins, not a result)**; full runs (cells 4g/4f) pending |
-| 5 | Main experiments (all models × series × horizons) | 20% | 95% | 19% | 🔄 **Started** — Chronos-Bolt-small + Chronos-2 + 7 classical models on 26 series (22 + 4 more; macro excluded: no post-release data). Post-release skill and the contamination gap run; results in the log (**preliminary**). **Tuned baselines run (25 series, 2026-11-27): Chronos-2 −0.453, Bolt-small −0.332 vs best tuned classical AutoTheta −0.035 — lead unchanged.** **Full RQ1 with 3 models (Chronos-Bolt-small, Chronos-2, TimesFM 2.5) + tuned baselines run on laptop 2026-11-28, CSVs saved in `results/chronos_post_tuned3/`: TimesFM −0.470, Chronos-2 −0.453, Bolt −0.332, best classical −0.036; the lead comes only from electricity + Wikipedia, FX is tied with naive.** **Gap run with 3 models + window-level bootstrap done 2026-11-28 (`results/gap_blocks/`).** Still missing: probabilistic metrics (CRPS/WQL), more model families |
-| 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 97% | 9.7% | 🔄 **First corrected answer (26 series, 2026-11-25): no leakage signature** — mean difference-in-differences is negative or ≈0 for both models, all intervals include 0 except a tiny FX effect; typical (median) series ≈ −0.03. **Robustness (2026-11-27, series-level checks): null result holds** — FX-as-one-cluster, leave-one-out, other reference definitions, event pages split out; only hourly electricity (n=2) is positive. Left: window-level block bootstrap (needs Colab re-run, cell 4e), write-up |
-| 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 75% | 3.75% | ✅ Scaled CRPS + 80% coverage (`forecastclean prob`) run on 25 series × 3 models (`results/prob/`, Section 5.4); RQ4 (returns) not started |
-| 8 | Paper writing (8 sections) | 15% | 80% | 12% | 🔄 **Draft v0.4 (2026-11-28): all 8 sections; RQ1, RQ2 (3 designs) and probabilistic results for 3 models; related work verified; reproducibility section** — all 8 sections in [`paper/PAPER.md`](paper/PAPER.md) with Figure 1, built only from results we have; related-work citations still to be verified; several numbers pending (see its "Open items") |
-| 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 30% | 1.5% | 🔄 `LICENSE` (MIT), `CITATION.cff`, `REPRODUCE.md` written; Zenodo DOI, arXiv upload and supervisor feedback still to do |
-| | **Total** | **100%** | | **90% (89.95%)** | |
-
-Overall % = sum of (weight × done). Update the "Done" column when a phase moves, then recompute.
-
-### 🎯 Agenda — what we do next (in order)
-1. **Literature (Phase 2, nearly done):** read Meyer et al. (2510.13654) and Moghadasi & Ghaderi (2609.10357) yourself; verify each model's **release date** (our conservative cutoff); confirm gap statement **A′** in `LITERATURE.md` §5. **Novelty warning:** post-cutoff evaluation and general ranking-stability studies are both crowded — our room is *rolling post-release origins + horizon sweep*.
-2. ~~Get the data (Phase 3)~~ ✅ downloaded 2026-11-25 (9 series, `data/MANIFEST.csv`). Licences in `DATA_SOURCES.md` still to confirm.
-3. **Re-run the batch after the design fixes (Phase 4):** `forecastclean batch` (≈7 min). Then plot 3–4 series by eye and check the forecasts look sane.
-4. **Fix the macro data end-date (Phase 3):** FRED-MD `current.csv` ended at 2025-08/09 although downloaded in Nov 2026. Open the St. Louis Fed FRED-MD page, find the newest monthly vintage file, then `forecastclean download --only fredmd_UNRATE fredmd_CPIAUCSL fredmd_INDPRO --fred-vintage <YYYY-MM>`.
-5. ~~Run Chronos on Colab (Phase 4)~~ ✅ done 2026-11-25 (post-release run). Chronos's training cutoff is not published, so we use each model's **release date** as a conservative cutoff (verify dates first).
-6. ~~First contamination-gap runs (RQ2)~~ ✅ 6-series and 22-series runs done, see log. The 22-series run is **confounded by context length** (fixed in code).
-7. ~~Corrected contamination-gap run~~ ✅ 2026-11-25 (26 series): **null result**, see log. The 22-series run and the 6-series run are superseded.
-8. **Next:** (a) ~~run the tuned-baseline comparison on Colab~~ ✅ done 2026-11-27: tuned baselines do not change the picture (save the CSVs when re-run); (b) robustness of the gap: ✅ series-level checks done (`forecastclean robust`); window-level block bootstrap ✅ done 2026-11-28 (`results/gap_blocks/`); **new open issue: event-page gaps unstable across origin samples**; per-model vs global cutoff; (c) add TimesFM 2.5 (second model family) if it installs on Colab; (d) ~~save the Colab result CSVs into the repo~~ ✅ done: `results/gap_fixed/`; (e) **start the paper skeleton** (Phase 8) around the null-result framing; (f) confirm release dates + data licences.
-
-### 🚦 Go / no-go gates
-- End of Phase 4: no foundation model runs at all → fall back to an all-classical + deep-baseline study of *evaluation-protocol sensitivity*.
-- End of Phase 6: no contamination gap anywhere → report it as a null result with CIs. **(Status 2026-11-25: corrected 26-series run shows no leakage signature → we are on the null-result path; the paper's contribution is the protocol + honest negative result, not a leak discovery.)**
-
-### ✅ Honest status of what is verified
-- Verified (27 tests run 2026-11-25): forecasters, MASE scaling, no look-ahead, DM-test behaviour, seasonal-vs-random-walk sanity, pre/post cutoff labels, the data-cleaning functions, Holm correction and ranking-stability bootstrap (all on synthetic inputs).
-- Verified on real weights (Colab, 2026-11-25): the Chronos adapter for Bolt-tiny, Bolt-small and Chronos-2.
-- **Preliminary only:** all foundation-model results (untuned ARIMA/ETS, release-date cutoffs rather than published training cutoffs, bootstrap over series treats correlated series — EUR crosses, Wikipedia pages — as independent, so intervals are too narrow).
-- **Verified 2026-11-27:** release dates (Chronos-Bolt 26 Nov 2024, Chronos-2 20 Oct 2025 per the Chronos GitHub news; arXiv 17 Oct 2025) — our cutoffs are later; model cards state no data cutoff; both Apache-2.0. **Not verified:** licences of the data sources; robustness of the null result to a window-level bootstrap (code + tests ready, not yet run on real windows).
+Paper draft: [`paper/PAPER.md`](paper/PAPER.md) · Reading notes for the supervisor: [`paper/READING_NOTES.md`](paper/READING_NOTES.md) · How to reproduce: [`REPRODUCE.md`](REPRODUCE.md) · Release steps: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)
 
 ---
 
-## 1. Why this project
-It extends your time-series coursework (ARIMA on S&P 500) into a research question. Literature flags that foundation-model (TSFM) benchmarks risk **information leakage** — pretraining data overlapping with test series or periods (Meyer et al., arXiv:2510.13654), and contamination audits are emerging (TSFMAudit, arXiv:2605.26161). Post-cutoff benchmarks already exist (e.g. TimesX, arXiv:2607.06973, a multimodal benchmark; arXiv:2609.10357), so our contribution must go beyond "evaluate after the cutoff" — see `LITERATURE.md`. A rigorous, small-scale, *transparent* evaluation protocol on real series that *you choose* (financial, energy, macro) with proper statistical tests is feasible on a CPU.
+## 1. Summary for the supervisor
 
-## 2. Research questions
-- **RQ1** Skill of each model vs a seasonal-naive/naive reference (relative MASE, Diebold–Mariano tests) on your series.
-- **RQ2** **Contamination gap:** is a foundation model's skill better on windows *before* its training cutoff than *after*? (A gap is evidence of leakage or memorisation.)
-- **RQ3** How sensitive are model rankings to the choice of evaluation window / horizon / series? (Ranking stability.)
-- **RQ4** On near-random-walk series (e.g. daily returns), does anything beat naive? (Expected: no — a useful null baseline.)
+### The question
+Foundation models are pretrained on huge collections of time series. If a test series, or the period it covers, was in that training data, the model's accuracy looks better than it really is. We ask two things:
 
-## 3. Design choices and why
-| Choice | Reason |
+- **RQ1.** On windows that start *after* every model's release date (so the data is clean), do the foundation models still beat classical methods?
+- **RQ2.** Is each model's advantage over classical methods larger *before* its release than *after*? A larger advantage before release would be a leakage-like signature. We measure it as a difference-in-differences (DiD): the change in the foundation model's relative error across release minus the same change for classical models. A positive DiD is leakage-like.
+
+### What we found
+
+| | Finding | Where |
+|---|---|---|
+| RQ1 | On clean data all three foundation models beat every classical method, tuned or not: about 28% (Chronos-Bolt-small), 36% (Chronos-2) and 37% (TimesFM 2.5) lower error than naive, against 3–4% for the best classical method. | Paper §5.1, Figures 2–3 |
+| Where the lead comes from | Electricity demand and Wikipedia pageviews only. On exchange rates every method ties with the random walk. | Figure 3 |
+| RQ2 | **No consistent leakage signature.** The mean DiD is negative for all three models in every design we tried (different origin samples, a calendar-matched design, a pre-period placed before TimesFM's documented corpus end). On the 18 series that are not calendar-event pages it is within ±0.04 and its intervals include zero. | Paper §5.2, Figures 4–5 |
+| One open item | Hourly electricity (one series) is the one consistently positive gap. We bound it: the foundation models stay far ahead after release, and seasonal methods move the same way. We cannot explain it with one series. | Paper Table 4c, Figure 6 |
+| Probabilistic accuracy | Same picture as for point forecasts. Chronos-2's 80% intervals are too narrow (coverage 0.751). | Paper §5.4, Figure 7 |
+
+A null result cannot prove that there is no leakage. Training cutoffs are not published, so we use release dates as a conservative stand-in; the paper says so and tests how much the answer moves.
+
+### What we have done, and what is still needed
+
+| Done | Still needed (who) |
 |---|---|
-| Rolling-origin evaluation with an asserted no-look-ahead | The standard in forecasting; a test spies on the context passed to each model |
-| MASE and relative MASE vs a reference | Scale-free, comparable across series; avoids MAPE pathologies |
-| Diebold–Mariano with Harvey correction | The standard test for equal forecast accuracy; tested for ≈5% false positives under H0 |
-| Pre/post-cutoff period labels | Operationalises the leakage question; only "post" windows are clean |
-| Classical set: naive, seasonal naive, drift, ETS, ARIMA, Theta, Comb(ETS+ARIMA+Theta) | Cheap baselines; combinations are hard to beat in forecasting competitions. ⚠ Our ETS/ARIMA are **not tuned** (ARIMA is fixed (1,1,1)) — fix before claiming foundation models beat "strong" classical methods |
-| Single reference: **naive** for every series | A seasonal-naive reference is meaningless on non-seasonal series. `season` is 1 for seasonally adjusted FRED-MD series and FX; real seasonality only for energy/web traffic |
-| Score only windows with target start ≥ `--eval-start` (default 2015-01-01), non-overlapping, ≤150 evenly thinned origins | Concentrates on recent windows around/after model cutoffs; keeps windows independent for the DM test |
-| Chronos adapter behind an optional import | Keeps the core runnable with no downloads |
+| Framework, tests, and a no-look-ahead check in code | Agree the framing, venue and author list (**supervisor**) |
+| 26 real series downloaded with licences recorded; NESO licence confirmed | Open each data licence link once, Wikimedia is still marked "confirm" (author) |
+| Full RQ1 with 3 foundation models, 9 classical methods and tuned baselines | Skim the two closest papers, notes are in `paper/READING_NOTES.md` (author) |
+| RQ2 gap in three designs, with five robustness checks and a window-level bootstrap | Optional: add Moirai or another model family if the supervisor wants it (extra run on the author's laptop) |
+| Probabilistic evaluation (scaled CRPS and coverage) | Pin the Hugging Face model revisions used in the runs (author, `pip freeze` plus commit hashes) |
+| Paper draft v0.5: 8 sections, 7 figures, 6 tables, related work checked against arXiv | Apply the venue's template to the paper (author, once the venue is chosen) |
+| Reproduction guide, `LICENSE`, `CITATION.cff` | Zenodo DOI and arXiv upload, steps in `RELEASE_CHECKLIST.md` (author, after supervisor approval) |
 
-## 4. Quick start
+### What we would like from the supervisor
+1. Is this framing right: foundation models keep a clear lead on clean data except on exchange rates, there is no consistent leakage signature, and absence cannot be proven?
+2. Which venue or workshop should we target, and who should be listed as authors?
+3. Is one more model family needed, or are Chronos and TimesFM enough?
+
+---
+
+## 2. How the evaluation works
+
+![Evaluation protocol](paper/figures/fig2_protocol.png)
+
+- **Rolling origins, no look-ahead.** A forecaster sees only data before the forecast origin; the code asserts this. Every window uses the same context length (1024 observations) for every model.
+- **Metric.** MASE (scaled by the in-sample seasonal-naive error), then divided by the naive method's MASE. Skill is the mean of the log of that ratio across series; lower is better and 0 means "same as naive".
+- **Release dates, not training cutoffs.** Training cutoffs are undisclosed. Windows after the latest release date (2025-10-31) are treated as clean for RQ1. For RQ2 each model has its own release date.
+
+![Timeline](paper/figures/fig3_timeline.png)
+
+### Data
+
+| Group | Series | Frequency | Horizon | Used for |
+|---|---:|---|---:|---|
+| ECB euro exchange rates | 10 | business-daily | 10 | RQ1, RQ2 |
+| GB electricity demand (NESO), daily | 1 | daily | 14 | RQ1, RQ2 |
+| GB electricity demand (NESO), hourly | 1 | hourly | 24 | RQ2 only |
+| Wikipedia pageviews, event pages (Christmas, Easter, Halloween, Thanksgiving, Wimbledon, Super Bowl, Ramadan, Eurovision) | 8 | daily | 14 | RQ1, RQ2 |
+| Wikipedia pageviews, other pages | 6 | daily | 14 | RQ1, RQ2 |
+
+Three FRED-MD macro series were downloaded but excluded because they end in 2025, so they have no post-release windows. Sources and licences: [`DATA_SOURCES.md`](DATA_SOURCES.md). Raw data is downloaded by `forecastclean download` and is not redistributed.
+
+### Models
+
+| Type | Models |
+|---|---|
+| Foundation | Chronos-Bolt-small (`amazon/chronos-bolt-small`), Chronos-2 (`amazon/chronos-2`), TimesFM 2.5 (`google/timesfm-2.5-200m-pytorch`) |
+| Classical | naive, seasonal naive, drift, ETS, ARIMA(1,1,1), Theta, Comb (ETS + ARIMA + Theta) |
+| Tuned classical (RQ1) | AutoETS, AutoTheta, AutoARIMA (non-seasonal series only) |
+
+---
+
+## 3. Results
+
+### RQ1: skill on clean data
+
+![Skill vs naive](paper/figures/fig1_rq1_skill.png)
+
+By data group (mean log-relative MASE vs naive, lower is better):
+
+![Skill by group](paper/figures/fig4_skill_by_group.png)
+
+### RQ2: the contamination gap
+
+![DiD across designs](paper/figures/fig5_did_forest.png)
+
+Each row is a mean DiD with a 95% interval over series. Values left of the vertical line mean the foundation model lost *less* skill after release than classical models did, which is the opposite of a leakage signature. The three designs are the 20-origin run on all 26 series, a calendar-matched design on the eight event pages, and a pre-period placed before TimesFM's documented corpus end.
+
+### Probabilistic accuracy
+
+![Probabilistic accuracy](paper/figures/fig6_probabilistic.png)
+
+---
+
+## 4. Limitations (full list in the paper, §6)
+
+- Release dates are a proxy for training cutoffs, so the leakage test is a lower bound on what could be detected.
+- One year of post-release data, and electricity has only two series; the hourly gap is bounded but not explained.
+- Domain familiarity (Wikipedia, electricity and exchange rates appear in public training corpora) cannot be removed by any time-based hold-out.
+- AutoARIMA is missing on seasonal series; only Chronos and TimesFM families were run; model revisions were not pinned (the commits are recorded in `REPRODUCE.md`).
+- Probabilistic references for classical methods use empirical quantiles of seasonal differences, not model-based intervals.
+
+---
+
+## 5. Project progress
+
+**Overall: 90%** (weighted sum of the phases below)
+
+| # | Phase | Weight | Done | Status |
+|---|---|---:|---:|---|
+| 1 | Framework and tests | 15% | 100% | ✅ Done |
+| 2 | Literature review and gap statement | 10% | 95% | 🔄 Verified against arXiv, key papers read in full by Claude; author skims them |
+| 3 | Real series, sources and licences | 10% | 95% | 🔄 Licences looked up; author opens each link once |
+| 4 | Real-data pipeline and model adapters | 10% | 100% | ✅ Done (Chronos-Bolt, Chronos-2, TimesFM 2.5) |
+| 5 | Main experiments | 20% | 95% | 🔄 RQ1 done; Moirai or another family not run |
+| 6 | RQ2 contamination gap and ranking stability | 10% | 97% | 🔄 Done; hourly electricity bounded, not explained |
+| 7 | Extensions | 5% | 75% | 🔄 Probabilistic evaluation done; RQ4 (returns) not started |
+| 8 | Paper writing | 15% | 80% | 🔄 Draft v0.5; venue formatting and supervisor edits to come |
+| 9 | Release | 5% | 30% | 🔄 Licence, citation file and checklist written; DOI, arXiv, supervisor feedback pending |
+
+Overall % = sum of weight × done. Update the "Done" column when a phase moves and recompute. Every run is logged in [`EXPERIMENT_LOG.md`](EXPERIMENT_LOG.md).
+
+---
+
+## 6. Quick start
+
 ```bash
-pip install -e ".[dev,fm,tuned]" && python -m pytest -q     # 44 tests (a few skip without statsforecast)
-forecastclean download                               # fetch + clean real series -> data/raw/*.csv, data/MANIFEST.csv
-forecastclean batch                                  # all series in data/raw -> results/batch/
-forecastclean batch --clean-from 2025-10-31 --post-only --horizon-sweep --out results/post   # A': only post-release windows, 4 horizons per series
-forecastclean run --csv data/raw/fredmd_UNRATE.csv --date-col date --value-col value --h 12 --season 12 --out results/unrate
-pip install -e . pytest && python -m pytest -q
-forecastclean simulate                                   # synthetic pipeline check
-forecastclean run --csv sp500.csv --date-col Date --value-col Close --h 21 --returns --out results/sp500
-# with a foundation model (Colab/laptop, internet for weights):
-pip install chronos-forecasting torch
-forecastclean run --csv energy.csv --h 24 --season 24 --cutoff 2024-01-01 --chronos amazon/chronos-bolt-tiny
+pip install -e ".[dev,fm,tuned]"       # fm = Chronos, timesfm = TimesFM, tuned = statsforecast
+python -m pytest -q                    # test suite
+forecastclean simulate                 # pipeline check on synthetic series
+forecastclean download                 # fetch and clean the real series -> data/raw/
+forecastclean batch --help             # RQ1 runs
+forecastclean gap --help               # RQ2 contamination gap
+forecastclean robust --dir results/gap_blocks   # robustness checks on a gap run
+forecastclean prob --help              # scaled CRPS and 80% coverage
 ```
-Get the model's true training cutoff from its model card — do not guess.
 
-## 5. What is verified / not (detail)
-Verified: forecasters, MASE scaling, no look-ahead, DM-test behaviour (identical → p=1; constant gap → p=0; ≈5% false positives under H0), seasonal models beat naive on seasonal data and nothing beats naive on a pure random walk, pre/post labelling. (The test suite caught a real DM edge-case bug during development.)
-Real-data checks: Chronos-Bolt, Chronos-2 and TimesFM 2.5 adapters run on real weights (Colab and laptop); full results are in `results/` and `paper/PAPER.md`. Both `forecastclean prob` and the calendar-matched gap (`--match-days`) have been run on real weights (2026-11-28).
+Exact commands, environment and run time for every result folder: [`REPRODUCE.md`](REPRODUCE.md). Regenerate the paper's tables and figures with `python paper/make_tables.py`, `python paper/make_fig1.py` and `python paper/make_figs.py`.
 
-## 6. Limitations
-Univariate only; point forecasts in the main results (`forecastclean prob` adds scaled CRPS and 80% coverage; results in Section 5.4 of the paper); a single cutoff per model; "pre-cutoff gap" is *evidence of* leakage, not proof (series may simply be easier earlier — use the classical reference to control, which is why skill is relative).
+## 7. Repository layout
 
-See `ROADMAP.md`.
+| Path | What it holds |
+|---|---|
+| `src/forecastclean/` | Library and command-line tool: evaluation, models, gap, robustness, probabilistic |
+| `tests/` | Unit tests (rolling origin, MASE, DM test, gap design, probabilistic) |
+| `results/` | Saved result files for every run in the paper |
+| `paper/` | Paper draft, figures, and the scripts that regenerate tables and figures |
+| `EXPERIMENT_LOG.md` | One row per run: command, models, data, result |
+| `LITERATURE.md`, `ROADMAP.md` | Literature notes and the original plan |
 
-## 7. Git workflow (VS Code terminal)
+## 8. Workflow and citation
+
 ```powershell
-git add .
+git add -A
 git commit -m "describe what changed"
 git push
 ```
-Update the progress table above whenever a phase moves, and commit it together with the work.
 
-## 8. Reproducing the paper
-See [`REPRODUCE.md`](REPRODUCE.md) (environment, exact commands per result folder, how to regenerate tables and the figures). Licence: MIT (`LICENSE`); how to cite: `CITATION.cff`.
+Update the progress table above whenever a phase moves, and commit it together with the work. Licence: MIT ([`LICENSE`](LICENSE)). How to cite: [`CITATION.cff`](CITATION.cff).
