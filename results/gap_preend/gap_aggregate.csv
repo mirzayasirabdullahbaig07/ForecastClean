@@ -1,0 +1,7 @@
+chronos,group,n_series,mean_did,median_did,ci_lo,ci_hi,n_positive
+chronos-2,all,8,-0.4786,-0.4205,-0.8116,-0.1603,1
+chronos-2,wikipedia,8,-0.4786,-0.4205,-0.8066,-0.1551,1
+chronos-bolt-small,all,8,-0.4358,-0.3454,-0.7218,-0.171,1
+chronos-bolt-small,wikipedia,8,-0.4358,-0.3454,-0.7207,-0.1731,1
+timesfm-2.5-200m-pytorch,all,8,-0.4345,-0.4181,-0.7531,-0.1035,2
+timesfm-2.5-200m-pytorch,wikipedia,8,-0.4345,-0.4181,-0.7429,-0.1077,2

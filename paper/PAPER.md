@@ -148,6 +148,16 @@ Table 4. Calendar-matched gap on the eight event pages (`results/gap_matched/`):
 
 The mean DiD on the event pages is negative for every model in every design we tried (40 origins, 20 origins and calendar-matched), and in the matched design the three models agree closely (−0.40 to −0.42). The sign is not leakage: these models lost less skill after release than classical models did. The values for single pages are not reproducible, though. The per-page DiD from the matched run correlates only between −0.35 and 0.51 with the per-page values of the earlier runs, so we make no claim about any individual page. Leaving out the most influential page moves the mean to between −0.25 and −0.53 and never makes it positive.
 
+Table 4b. Same eight pages with the pre-period moved to the 365 days ending 2023-12-31 (`results/gap_preend/`), i.e. before TimesFM's documented corpus end (late 2023) and before every release date; the post-period is unchanged.
+
+| Model | Mean DiD | Median | 95% interval, over pages | Block bootstrap (5 origins) | Pages with DiD > 0 |
+| --- | --- | --- | --- | --- | --- |
+| Chronos-Bolt-small | −0.436 | −0.345 | [−0.722, −0.171] | [−0.602, −0.009] | 1 |
+| Chronos-2 | −0.479 | −0.421 | [−0.812, −0.160] | [−0.583, 0.043] | 1 |
+| TimesFM 2.5 | −0.435 | −0.418 | [−0.753, −0.104] | [−0.693, 0.041] | 2 |
+
+Moving the pre-period to 2023 changes the means by less than 0.07 for every model. The sign stays negative, the page-level interval excludes 0, and the block-bootstrap intervals for Chronos-2 and TimesFM include 0. So the result does not depend on whether the pre-period is in 2023 or in the year before release, and it gives no leakage signature on these pages. It also does not explain the negative sign: the foundation models do better after release than before, relative to classical models, on pages with strong yearly events. We have not isolated the cause (a change in the pageview regime after 2023 and calendar phase are candidates).
+
 **Hourly electricity.** The hourly series has a positive DiD for Chronos-2 in both runs (+0.31 and +0.17) and for TimesFM 2.5 in the one run that includes it (+0.33); for Chronos-Bolt-small it is +0.21 and −0.01. It is one series, so we cannot separate leakage from a change in demand patterns (Section 6).
 
 ### 5.3 Robustness
@@ -190,7 +200,7 @@ The null result in Section 5.2 is weaker than it looks, for these reasons.
 
 - **Release dates are not training cutoffs.** A model's real cutoff is earlier than its release date, so some pre-release windows are already clean, and the rest are only possibly seen. Both effects make any measured gap a lower bound. A null result does not show that no contamination exists, and an earlier study argues that familiarity can survive a later hold-out (Moghadasi and Ghaderi 2026).
 - **Intervals are too narrow.** The bootstrap resamples series as independent, but the EUR pairs share a currency and the Wikipedia pages share news cycles. Counting the EUR pairs as one unit widens the intervals but does not change the conclusion. A window-level block bootstrap (Section 5.3) gives narrower intervals but does not fix this.
-- **The matched pre-period may be clean too.** TimesFM's authors describe a corpus that ends around late 2023 (as cited by Moghadasi and Ghaderi), so the 365 days before TimesFM's release probably lie after its corpus end. The calendar-matched design controls for calendar phase but weakens the contamination contrast for that model; the earlier designs, which sample origins back to 2015, test it better. `forecastclean gap --pre-end` places the pre-period before a stated end date, and has not yet been run.
+- **The matched pre-period may be clean too.** TimesFM's authors describe a corpus that ends around late 2023 (as cited by Moghadasi and Ghaderi), so the 365 days before TimesFM's release probably lie after its corpus end. The calendar-matched design controls for calendar phase but weakens the contamination contrast for that model; the earlier designs, which sample origins back to 2015, test it better. `forecastclean gap --pre-end` places the pre-period before a stated end date; we ran it with the pre-period ending 2023-12-31 (Table 4b) and the means moved by less than 0.07, so this limitation does not change the conclusion on the event pages.
 - **Event pages are noisy.** The per-page gap on the eight calendar-event Wikipedia pages changes a lot, and sometimes flips sign, with the sample of origins, and a calendar-matched design does not make single pages reproducible (Section 5.2). Only the mean over the eight pages is stable in sign, so we draw no page-level conclusions.
 - **Few series per group.** Electricity has two series, and its positive gap on the hourly series is unexplained. We cannot separate a leakage effect from a change in demand.
 - **Classical models are fixed.** ARIMA is a fixed (1,1,1) in most runs and was dropped from the RQ2 runs. Tuned AutoARIMA ran only on non-seasonal series, so the strongest classical competitor is missing on seasonal series.

@@ -11,4 +11,5 @@ data/raw/
 !results/gap_blocks/
 *.zip
 !results/gap_matched/
+!results/gap_preend/
 !results/prob/

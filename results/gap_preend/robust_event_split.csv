@@ -1,0 +1,4 @@
+chronos,group,n_series,mean_did,median_did,ci_lo,ci_hi,n_positive
+chronos-2,wiki_event,8,-0.4786,-0.4206,-0.8116,-0.1603,1
+chronos-bolt-small,wiki_event,8,-0.4358,-0.3454,-0.7198,-0.1614,1
+timesfm-2.5-200m-pytorch,wiki_event,8,-0.4345,-0.4181,-0.7564,-0.1035,2

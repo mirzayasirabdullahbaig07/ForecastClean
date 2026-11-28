@@ -1,0 +1,4 @@
+chronos,full_mean,loo_min,loo_max,most_influential,mean_without_it
+chronos-2,-0.4786,-0.5992,-0.3508,wiki_Halloween,-0.3508
+chronos-bolt-small,-0.4358,-0.532,-0.337,wiki_Wimbledon,-0.337
+timesfm-2.5-200m-pytorch,-0.4345,-0.5507,-0.3372,wiki_Ramadan,-0.5507
