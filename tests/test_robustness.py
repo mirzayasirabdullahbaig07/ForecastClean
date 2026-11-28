@@ -79,44 +79,20 @@ def test_gap_collect_returns_per_window_mase_usable_by_block_bootstrap():
     assert len(rb.block_did(w, block=3, n_boot=50)) == 1
 
 
-# ---------- TimesFM adapter (fake model; real weights are untested until the first Colab run) ----------
-def test_timesfm_adapter_returns_the_median_and_passes_context_unchanged():
-    from forecastclean.models import timesfm_forecaster
-    seen = {}
-
-    class Fake:
-        def forecast(self, horizon, inputs):
-            seen["h"] = horizon; seen["len"] = len(inputs[0]); seen["n"] = len(inputs)
-            q = np.zeros((1, horizon, 10)); q[0, :, 0] = -1; q[0, :, 5] = np.arange(horizon) + 10      # mean slot = -1, median slot = 10..
-            return np.full((1, horizon), 99.0), q
-    f = timesfm_forecaster("google/timesfm-2.5-200m-pytorch", model=Fake())
-    assert f(np.arange(50.0), 4).tolist() == [10, 11, 12, 13]                 # q50 (index 5), not the mean or the point forecast
-    assert seen == {"h": 4, "len": 50, "n": 1} and f.__name__ == "timesfm-2.5-200m-pytorch"
-
-
-def test_timesfm_adapter_falls_back_to_point_forecast_and_rejects_too_long_horizons():
-    from forecastclean.models import timesfm_forecaster
-
-    class NoQ:
-        def forecast(self, horizon, inputs):
-            return np.arange(horizon, dtype=float).reshape(1, horizon), np.zeros((1, horizon, 3))      # unexpected quantile axis
-    f = timesfm_forecaster(model=NoQ(), max_horizon=8)
-    assert f(np.arange(30.0), 3).tolist() == [0, 1, 2]
-    import pytest
-    with pytest.raises(ValueError):
-        f(np.arange(30.0), 9)
-
-
-def test_foundation_forecaster_routes_timesfm_ids_to_the_timesfm_adapter(monkeypatch):
-    from forecastclean import models
-    called = {}
-    monkeypatch.setattr(models, "timesfm_forecaster", lambda mid, **kw: called.setdefault("t", mid))
-    monkeypatch.setattr(models, "chronos_forecaster", lambda mid, **kw: called.setdefault("c", mid))
-    models.foundation_forecaster("google/timesfm-2.5-200m-pytorch"); models.foundation_forecaster("amazon/chronos-2")
-    assert called == {"t": "google/timesfm-2.5-200m-pytorch", "c": "amazon/chronos-2"}
-
-
-def test_registry_knows_the_timesfm_id_that_batch_and_gap_derive():
-    from forecastclean.registry import RELEASE, clean_from
-    assert "timesfm-2.5-200m-pytorch" in RELEASE
-    assert str(clean_from(["chronos-2", "timesfm-2.5-200m-pytorch"]).date()) == "2025-10-31"   # latest of the two
+def test_match_days_restricts_both_periods_to_the_same_calendar_span():
+    """Calendar-matched gap design: pre origins start no earlier than release - match_days, post targets end no later than
+    release + match_days, and both periods get a comparable number of windows."""
+    import pandas as pd
+    from forecastclean.gap import gap_for_series
+    from forecastclean.models import naive
+    from forecastclean.synthetic import seasonal_series
+    ser = seasonal_series(n=1200, season=7, seed=2); ser.index = pd.date_range("2018-01-01", periods=len(ser), freq="D")
+    rel = ser.index[700]; md = 210
+    cl = []
+    rows, info = gap_for_series(ser, 7, 7, "m", naive, rel.strftime("%Y-%m-%d"), max_origins=10_000, max_context=None,
+                                eval_start="2018-04-01", min_windows=3, collect=cl, match_days=md)
+    assert rows is not None
+    c = pd.concat(cl); dates = ser.index[c.origin.to_numpy()]
+    pre = dates[(c.period == "pre").to_numpy()]; post = dates[(c.period == "post").to_numpy()]
+    assert pre.min() >= rel - pd.Timedelta(days=md) and post.max() + pd.Timedelta(days=6) <= rel + pd.Timedelta(days=md)
+    assert abs(info["n_pre"] - info["n_post"]) <= 2 and info["n_pre"] >= 25

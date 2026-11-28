@@ -1,0 +1,6 @@
+run,model,n,mean_did,lo,hi
+gap_fixed,chronos-2,18,-0.038,-0.083,0.015
+gap_fixed,chronos-bolt-small,18,-0.009,-0.055,0.037
+gap_blocks,chronos-2,18,-0.026,-0.107,0.071
+gap_blocks,chronos-bolt-small,18,0.018,-0.037,0.072
+gap_blocks,timesfm-2.5-200m-pytorch,18,0.03,-0.027,0.1

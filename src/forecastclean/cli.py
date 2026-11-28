@@ -23,7 +23,13 @@ def main(argv=None):
     g.add_argument("--chronos", nargs="+", required=True); g.add_argument("--max-context", type=int, default=1024)
     g.add_argument("--max-origins", type=int, default=60); g.add_argument("--eval-start", default="2015-01-01")
     g.add_argument("--drop", nargs="*", help="skip slow classical models, e.g. --drop arima")
+    g.add_argument("--match-days", type=int, default=None, help="calendar-matched design: score only origins within this many days before and after the release date (365 = one yearly cycle each side); use with a large --max-origins")
     g.add_argument("--tuned", action="store_true", help="add tuned baselines (needs statsforecast); the classical median then includes them")
+    pr = sub.add_parser("prob", help="probabilistic accuracy: scaled CRPS + 80% coverage of foundation models vs empirical-quantile classical references")
+    pr.add_argument("--data", default="data/raw"); pr.add_argument("--out", default="results/prob"); pr.add_argument("--only", nargs="*")
+    pr.add_argument("--chronos", nargs="*", help="foundation model ids (Chronos or TimesFM)"); pr.add_argument("--clean-from")
+    pr.add_argument("--release-cutoff", action="store_true"); pr.add_argument("--max-context", type=int, default=1024)
+    pr.add_argument("--max-origins", type=int, default=30); pr.add_argument("--eval-start", default="2015-01-01")
     rb = sub.add_parser("robust", help="robustness checks of the contamination gap, from a results folder written by `forecastclean gap`")
     rb.add_argument("--dir", default="results/gap"); rb.add_argument("--block", type=int, default=5, help="block length (origins) of the window-level bootstrap")
     r = sub.add_parser("run", help="Evaluate on YOUR csv (columns: date,value)")
@@ -37,6 +43,9 @@ def main(argv=None):
     if args.cmd == "batch":
         from .batch import run_batch
         return run_batch(args)
+    if args.cmd == "prob":
+        from .probabilistic import run_prob
+        return run_prob(args)
     if args.cmd == "gap":
         from .gap import run_gap
         return run_gap(args)

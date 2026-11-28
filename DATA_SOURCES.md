@@ -6,7 +6,7 @@ _Status 2026-11-25: **candidate list.** The download code is written and its cle
 
 | name | what | freq / season | source | licence / terms | status |
 |---|---|---|---|---|---|
-| fredmd_UNRATE | US unemployment rate (seasonally adjusted) | monthly / 1 | FRED-MD `current.csv` (St. Louis Fed; McCracken & Ng 2016, JBES 34(4)) | ⚠ confirm FRED terms of use | to download |
+| fredmd_UNRATE | US unemployment rate (seasonally adjusted) | monthly / 1 | FRED-MD `current.csv` (St. Louis Fed; McCracken & Ng 2016, JBES 34(4)) | FRED Services terms apply (https://fred.stlouisfed.org/legal/terms_of_use.html); **not used in any reported result** (series end 2025) | downloaded, excluded |
 | fredmd_CPIAUCSL | US CPI, all items (seasonally adjusted) | monthly / 1 | FRED-MD | ⚠ confirm | to download |
 | fredmd_INDPRO | US industrial production (seasonally adjusted) | monthly / 1 | FRED-MD | ⚠ confirm | to download |
 | neso_demand_daily | GB national demand (ND), daily mean MW | daily / 7 | NESO Historic Demand Data (CKAN API, package `8f2fe0af-…`) | **NESO Open Data Licence** (shown on the NESO portal) — read it for attribution terms | to download |
@@ -34,3 +34,14 @@ _Status 2026-11-25: **candidate list.** The download code is written and its cle
 
 ## Download results (2026-11-25)
 All 9 downloaded. Coverage: FRED-MD 1959→**2025-08/09** (only through 2025 despite a Nov-2026 download — try a newer dated vintage with `--fred-vintage`); NESO 2001→2026-11-03; ECB 2000→2026-11-24; Wikipedia 2015-07→2026-11-23. Macro series therefore cannot provide windows after 2025.
+
+## Licence check (2026-11-28, from the sources' own pages; the author should open each link once and confirm)
+
+| source | terms found | what we must do |
+|---|---|---|
+| NESO Historic Demand | NESO Open Data Licence v1.0, based on Open Government Licence v3.0 with NESO amendments; each dataset is licensed individually (https://www.neso.energy/data-portal/ngeso-open-licence) | Include the attribution statement "Supported by National Energy SO Open Data". Confirm on the dataset's own portal page that it carries this licence. |
+| ECB exchange rates | Free reuse if the source is quoted (e.g. "Source: ECB statistics.") and the statistics (including metadata) are not modified; third-party data excluded (https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html) | Quote the source. We do not redistribute the raw series (`data/raw/` is git-ignored); only derived error tables are committed. |
+| Wikipedia pageviews | Wikimedia states that all Analytics datasets are available under CC0 unless otherwise specified (https://download.wikipedia.com/legal.html); we read them from the Wikimedia Analytics REST API | Cite the Wikimedia Analytics API. No licence obstacle found. |
+| FRED-MD | Series come from the St. Louis Fed (McCracken and Ng 2016); FRED Services terms apply | Not used in any reported result. If used later, cite McCracken and Ng (2016) and pin a dated vintage. |
+
+**Data statement for the paper (draft):** "All series are public. Electricity demand: NESO Historic Demand Data (NESO Open Data Licence v1.0; Supported by National Energy SO Open Data). Exchange rates: ECB euro foreign exchange reference rates (Source: ECB statistics). Pageviews: Wikimedia Analytics API (CC0). Raw data is downloaded by `forecastclean download` and is not redistributed; data checksums are in `results/gap_fixed/MANIFEST_colab_2026-11-25.csv`."

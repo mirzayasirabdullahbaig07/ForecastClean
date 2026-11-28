@@ -7,21 +7,21 @@ Repo: https://github.com/mirzayasirabdullahbaig07/ForecastClean · Local: `C:\Us
 
 ## 📊 Project progress — where we are right now
 
-**Overall: 70% ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░ (target: research-paper preprint)**
+**Overall: 81% ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░ (target: research-paper preprint)**
 _Last updated: 2026-11-27 · Current phases: **Phase 5 — main experiments** (first Chronos results logged in [`EXPERIMENT_LOG.md`](EXPERIMENT_LOG.md)), plus **Phase 2 — Literature** ([`LITERATURE.md`](LITERATURE.md)) and **Phase 3 — Data** ([`DATA_SOURCES.md`](DATA_SOURCES.md)) to finish_
 
 | # | Phase | Weight | Done | Contribution | Status |
 |---|---|---:|---:|---:|---|
 | 1 | Framework + tests (rolling origin, MASE, DM test, 5 baselines, CLI) | 15% | 100% | 15% | ✅ Done (6/6 tests pass, `simulate` runs) |
-| 2 | Literature review + gap statement | 10% | 80% | 8% | 🔄 **Nearly done** — closest competitor (2609.10357) analysed; new gap **A′** (rolling origins after release dates + horizon sweep) in `LITERATURE.md` §5; release dates found (`LITERATURE.md` §6); you still read the 2 key papers + confirm dates at the model cards |
-| 3 | Choose 6–10 real series (source + licence recorded) | 10% | 70% | 7% | 🔄 **Mostly done** — all 9 series downloaded (2026-11-25) and manifest saved; **licences still to confirm**; macro series end 2025 (see agenda) |
-| 4 | Real-data pipeline + Chronos adapter tested | 10% | 95% | 9.5% | ✅ **Nearly done** — Chronos-Bolt and Chronos-2 run on real weights (Colab); tuned baselines (AutoETS, AutoTheta, AutoARIMA on non-seasonal series) implemented + tested (`--tuned`), **Colab run done 2026-11-27 (25 series)**; **TimesFM 2.5 adapter: smoke test passed on real weights (Colab, 2026-11-27: 2 series × 5 origins, not a result)**; full runs (cells 4g/4f) pending |
-| 5 | Main experiments (all models × series × horizons) | 20% | 80% | 16% | 🔄 **Started** — Chronos-Bolt-small + Chronos-2 + 7 classical models on 26 series (22 + 4 more; macro excluded: no post-release data). Post-release skill and the contamination gap run; results in the log (**preliminary**). **Tuned baselines run (25 series, 2026-11-27): Chronos-2 −0.453, Bolt-small −0.332 vs best tuned classical AutoTheta −0.035 — lead unchanged.** **Full RQ1 with 3 models (Chronos-Bolt-small, Chronos-2, TimesFM 2.5) + tuned baselines run on laptop 2026-11-28, CSVs saved in `results/chronos_post_tuned3/`: TimesFM −0.470, Chronos-2 −0.453, Bolt −0.332, best classical −0.036; the lead comes only from electricity + Wikipedia, FX is tied with naive.** **Gap run with 3 models + window-level bootstrap done 2026-11-28 (`results/gap_blocks/`).** Still missing: probabilistic metrics (CRPS/WQL), more model families |
+| 2 | Literature review + gap statement | 10% | 90% | 9% | 🔄 **Nearly done** — closest competitor (2609.10357) analysed; new gap **A′** (rolling origins after release dates + horizon sweep) in `LITERATURE.md` §5; release dates found (`LITERATURE.md` §6); the 5 cited papers checked 2026-11-28 against arXiv (2 in full text); **you still read the 2 key papers** |
+| 3 | Choose 6–10 real series (source + licence recorded) | 10% | 90% | 9% | 🔄 **Mostly done** — all 9 series downloaded (2026-11-25) and manifest saved; licences looked up 2026-11-28 (`DATA_SOURCES.md`), **author confirms each link once**; macro series end 2025 (see agenda) |
+| 4 | Real-data pipeline + Chronos adapter tested | 10% | 100% | 10% | ✅ **Nearly done** — Chronos-Bolt and Chronos-2 run on real weights (Colab); tuned baselines (AutoETS, AutoTheta, AutoARIMA on non-seasonal series) implemented + tested (`--tuned`), **Colab run done 2026-11-27 (25 series)**; **TimesFM 2.5 adapter: smoke test passed on real weights (Colab, 2026-11-27: 2 series × 5 origins, not a result)**; full runs (cells 4g/4f) pending |
+| 5 | Main experiments (all models × series × horizons) | 20% | 85% | 17% | 🔄 **Started** — Chronos-Bolt-small + Chronos-2 + 7 classical models on 26 series (22 + 4 more; macro excluded: no post-release data). Post-release skill and the contamination gap run; results in the log (**preliminary**). **Tuned baselines run (25 series, 2026-11-27): Chronos-2 −0.453, Bolt-small −0.332 vs best tuned classical AutoTheta −0.035 — lead unchanged.** **Full RQ1 with 3 models (Chronos-Bolt-small, Chronos-2, TimesFM 2.5) + tuned baselines run on laptop 2026-11-28, CSVs saved in `results/chronos_post_tuned3/`: TimesFM −0.470, Chronos-2 −0.453, Bolt −0.332, best classical −0.036; the lead comes only from electricity + Wikipedia, FX is tied with naive.** **Gap run with 3 models + window-level bootstrap done 2026-11-28 (`results/gap_blocks/`).** Still missing: probabilistic metrics (CRPS/WQL), more model families |
 | 6 | RQ2 contamination gap + RQ3 ranking stability | 10% | 90% | 9% | 🔄 **First corrected answer (26 series, 2026-11-25): no leakage signature** — mean difference-in-differences is negative or ≈0 for both models, all intervals include 0 except a tiny FX effect; typical (median) series ≈ −0.03. **Robustness (2026-11-27, series-level checks): null result holds** — FX-as-one-cluster, leave-one-out, other reference definitions, event pages split out; only hourly electricity (n=2) is positive. Left: window-level block bootstrap (needs Colab re-run, cell 4e), write-up |
-| 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 0% | 0% | ⬜ Not started |
-| 8 | Paper writing (8 sections) | 15% | 35% | 5.25% | 🔄 **Draft v0.2 (2026-11-28; RQ1 now 3 models + by-group table)** — all 8 sections in [`paper/PAPER.md`](paper/PAPER.md) with Figure 1, built only from results we have; related-work citations still to be verified; several numbers pending (see its "Open items") |
-| 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 0% | 0% | ⬜ Not started |
-| | **Total** | **100%** | | **70% (69.75%, shown as 70%)** | |
+| 7 | Extensions (CRPS/WQL, RQ4 return series) | 5% | 50% | 2.5% | 🔄 Scaled CRPS + 80% coverage implemented and tested (`forecastclean prob`); **not yet run on real data**; RQ4 (returns) not started |
+| 8 | Paper writing (8 sections) | 15% | 55% | 8.25% | 🔄 **Draft v0.3 (2026-11-28): all 8 sections, RQ1 + RQ2 with 3 models, related work verified, reproducibility section** — all 8 sections in [`paper/PAPER.md`](paper/PAPER.md) with Figure 1, built only from results we have; related-work citations still to be verified; several numbers pending (see its "Open items") |
+| 9 | Release (Zenodo, arXiv, supervisor feedback) | 5% | 20% | 1% | 🔄 `LICENSE` (MIT), `CITATION.cff`, `REPRODUCE.md` written; Zenodo DOI, arXiv upload and supervisor feedback still to do |
+| | **Total** | **100%** | | **81% (80.75%, shown as 81%)** | |
 
 Overall % = sum of (weight × done). Update the "Done" column when a phase moves, then recompute.
 
@@ -70,7 +70,7 @@ It extends your time-series coursework (ARIMA on S&P 500) into a research questi
 
 ## 4. Quick start
 ```bash
-pip install -e ".[dev]" && python -m pytest -q     # 19 tests
+pip install -e ".[dev,fm,tuned]" && python -m pytest -q     # 44 tests (a few skip without statsforecast)
 forecastclean download                               # fetch + clean real series -> data/raw/*.csv, data/MANIFEST.csv
 forecastclean batch                                  # all series in data/raw -> results/batch/
 forecastclean batch --clean-from 2025-10-31 --post-only --horizon-sweep --out results/post   # A': only post-release windows, 4 horizons per series
@@ -86,10 +86,10 @@ Get the model's true training cutoff from its model card — do not guess.
 
 ## 5. What is verified / not (detail)
 Verified: forecasters, MASE scaling, no look-ahead, DM-test behaviour (identical → p=1; constant gap → p=0; ≈5% false positives under H0), seasonal models beat naive on seasonal data and nothing beats naive on a pure random walk, pre/post labelling. (The test suite caught a real DM edge-case bug during development.)
-Not verified: the Chronos adapter and real-data findings.
+Real-data checks: Chronos-Bolt, Chronos-2 and TimesFM 2.5 adapters run on real weights (Colab and laptop); full results are in `results/` and `paper/PAPER.md`. Not verified: the `prob` command on real weights (tested with fake models and synthetic data only), and the calendar-matched gap (`--match-days`) on real data.
 
 ## 6. Limitations
-Univariate only; point forecasts (no probabilistic scores yet — add CRPS/WQL in v2); a single cutoff per model; "pre-cutoff gap" is *evidence of* leakage, not proof (series may simply be easier earlier — use the classical reference to control, which is why skill is relative).
+Univariate only; point forecasts in the main results (`forecastclean prob` adds scaled CRPS and 80% coverage; not yet run on real data); a single cutoff per model; "pre-cutoff gap" is *evidence of* leakage, not proof (series may simply be easier earlier — use the classical reference to control, which is why skill is relative).
 
 See `ROADMAP.md`.
 
@@ -100,3 +100,6 @@ git commit -m "describe what changed"
 git push
 ```
 Update the progress table above whenever a phase moves, and commit it together with the work.
+
+## 8. Reproducing the paper
+See [`REPRODUCE.md`](REPRODUCE.md) (environment, exact commands per result folder, how to regenerate tables and Figure 1). Licence: MIT (`LICENSE`); how to cite: `CITATION.cff`.

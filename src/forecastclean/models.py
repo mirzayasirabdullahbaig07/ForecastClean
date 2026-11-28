@@ -79,21 +79,27 @@ def chronos_forecaster(model_id="amazon/chronos-bolt-tiny", device="auto", pipel
 
     mode = {"3d": "Chronos2" in type(pipeline).__name__}   # Chronos-2 wants (n_series, n_variates, history); Bolt takes 1-d
 
-    def f(train, h, season=1):
+    def quantiles(train, h, levels):
+        """Quantile forecast, array [h, len(levels)]."""
+        levels = [float(v) for v in levels]
         x = torch.tensor(np.asarray(train, dtype=np.float32), dtype=torch.float32)
         if mode["3d"]:
             x = x.reshape(1, 1, -1)
         try:
-            q, _ = pipeline.predict_quantiles(x, prediction_length=h, quantile_levels=[0.5])   # positional input: version-proof
+            q, _ = pipeline.predict_quantiles(x, prediction_length=h, quantile_levels=levels)   # positional input: version-proof
         except ValueError:
             if mode["3d"]:
                 raise
             mode["3d"] = True                                  # pipeline rejected 1-d input -> retry once as 3-d, remember it
-            q, _ = pipeline.predict_quantiles(x.reshape(1, 1, -1), prediction_length=h, quantile_levels=[0.5])
+            q, _ = pipeline.predict_quantiles(x.reshape(1, 1, -1), prediction_length=h, quantile_levels=levels)
         first = q[0]                                                                       # first (only) series
         arr = np.asarray(first.detach().cpu().numpy() if hasattr(first, "detach") else first, dtype=float)
-        return arr.reshape(-1, arr.shape[-2], arr.shape[-1])[0, :, 0]                      # first variate, h steps, median
+        return arr.reshape(-1, arr.shape[-2], arr.shape[-1])[0]                            # first variate: [h, Q]
+
+    def f(train, h, season=1):
+        return quantiles(train, h, [0.5])[:, 0]                                            # median
     f.__name__ = model_id.split("/")[-1]
+    f.quantiles = quantiles
     return f
 
 
@@ -119,7 +125,24 @@ def timesfm_forecaster(model_id="google/timesfm-2.5-200m-pytorch", max_context=1
         # quantile axis = [mean, q10, ..., q90] -> index 5 is the median, matching the median used for Chronos; fall back to point
         out = q[0, :, 5] if q.ndim == 3 and q.shape[-1] == 10 else np.asarray(point, dtype=float)[0]
         return np.asarray(out, dtype=float)[:h]
+
+    def quantiles(train, h, levels):
+        """Quantile forecast, array [h, len(levels)]. TimesFM 2.5 returns the deciles q10..q90 (axis index 1..9; index 0 is the mean)."""
+        if h > max_horizon:
+            raise ValueError(f"horizon {h} exceeds the compiled max_horizon {max_horizon}")
+        _, quant = model.forecast(horizon=h, inputs=[np.asarray(train, dtype=np.float32)])
+        q = np.asarray(quant, dtype=float)
+        if q.ndim != 3 or q.shape[-1] != 10:
+            raise ValueError(f"unexpected TimesFM quantile shape {q.shape}")
+        cols = []
+        for v in levels:
+            k = int(round(float(v) * 10))
+            if abs(k / 10 - float(v)) > 1e-9 or not 1 <= k <= 9:
+                raise ValueError(f"TimesFM 2.5 provides quantile levels 0.1..0.9 in steps of 0.1, not {v}")
+            cols.append(k)
+        return q[0, :h, :][:, cols]
     f.__name__ = model_id.split("/")[-1]
+    f.quantiles = quantiles
     return f
 
 

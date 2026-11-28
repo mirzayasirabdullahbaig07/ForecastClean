@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it as below."
+title: "ForecastClean: leakage-aware rolling-origin evaluation of classical vs foundation forecasters"
+type: software
+authors:
+  - family-names: "Fiaz"
+    given-names: "Syeda Faiqa"
+version: "0.2.0"
+date-released: "2026-11-28"
+license: MIT
+repository-code: "https://github.com/mirzayasirabdullahbaig07/ForecastClean"
+keywords:
+  - time series forecasting
+  - foundation models
+  - data leakage
+  - evaluation

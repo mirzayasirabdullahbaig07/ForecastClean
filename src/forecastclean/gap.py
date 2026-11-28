@@ -28,7 +28,7 @@ def _rel(res: pd.DataFrame) -> pd.Series:
 
 
 def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origins=60, max_context=1024,
-                   eval_start="2015-01-01", min_windows=5, drop=(), tuned=False, collect=None):
+                   eval_start="2015-01-01", min_windows=5, drop=(), tuned=False, collect=None, match_days=None):
     """Return (rows, summary) or (None, reason). rows: one line per model x period."""
     fc = {k: v for k, v in BASELINES.items() if k not in drop}; fc[chronos_name] = chronos_fc   # drop: skip slow models
     if tuned:
@@ -37,10 +37,16 @@ def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origin
     # Every window, before and after, must see the SAME context length (min_train = max_context). Otherwise early pre-release
     # windows (short history) would penalise long-context models and bias the gap (found on the first 22-series run).
     mt = max_context or 30
+    # match_days: calendar-matched design. Both periods cover exactly the same number of days, one on each side of the release date
+    # (e.g. 365 = one full yearly cycle each). Without it, pre-release origins are thinned across ~10 years and post-release ones
+    # across ~1 year, so on yearly-seasonal series (Christmas, Thanksgiving pages) the two samples hit different calendar phases.
+    pre_start, post_end = (eval_start, None)
+    if match_days:
+        pre_start = max(pd.Timestamp(eval_start), r - pd.Timedelta(days=match_days)); post_end = r + pd.Timedelta(days=match_days)
     pre = evaluate(ser, fc, h=h, season=season, max_context=max_context, max_origins=max_origins, min_train=mt,
-                   eval_start=eval_start, eval_end=r)
+                   eval_start=pre_start, eval_end=r)
     post = evaluate(ser, fc, h=h, season=season, max_context=max_context, max_origins=max_origins, min_train=mt,
-                    eval_start=r + pd.Timedelta(days=1))
+                    eval_start=r + pd.Timedelta(days=1), eval_end=post_end)
     n_pre = pre.origin.nunique() if len(pre) else 0; n_post = post.origin.nunique() if len(post) else 0
     if n_pre < min_windows or n_post < min_windows:
         return None, f"pre windows={n_pre}, post windows={n_post} (< {min_windows})"
@@ -94,7 +100,8 @@ def run_gap(args) -> int:
             df = pd.read_csv(data / f"{n}.csv", parse_dates=["date"]).sort_values("date")
             ser = df.set_index("date")["value"].astype(float); h = H_BY_FREQ[freq]
             rows, info = gap_for_series(ser, season, h, short, fcm, rel, args.max_origins, args.max_context, args.eval_start,
-                                         drop=tuple(args.drop or ()), tuned=args.tuned, collect=(cl := []))
+                                         drop=tuple(args.drop or ()), tuned=args.tuned, collect=(cl := []),
+                                         match_days=getattr(args, "match_days", None))
             if rows is None:
                 print(f"   {n}: skipped ({info})"); continue
             rows.insert(0, "series", n); rows["h"] = h; allrows.append(rows)
