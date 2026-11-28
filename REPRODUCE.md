@@ -42,3 +42,15 @@ python paper/make_fig1.py       # Figure 1
 ## Data
 
 Sources and licences: `DATA_SOURCES.md`. Checksums of the exact files used: `results/gap_fixed/MANIFEST_colab_2026-11-25.csv`. The ECB, Wikipedia and NESO series end on different days, so re-running `forecastclean download` later gives slightly longer series and slightly different numbers.
+
+## Model revisions
+
+Revisions were not pinned in the runs (the code loads the default branch). The latest commits on 2026-11-28, which is when the last runs were made, were:
+
+| Model | Hugging Face id | Commit | Last modified |
+| --- | --- | --- | --- |
+| Chronos-Bolt-small | `amazon/chronos-bolt-small` | `772f3d25d38aec6d914c8949dab4462e2d46f5d8` | 2025-11-21 |
+| Chronos-2 | `amazon/chronos-2` | `29ec3766d36d6f73f0696f85560a422f50e8498c` | 2026-06-05 |
+| TimesFM 2.5 | `google/timesfm-2.5-200m-pytorch` | `1d952420fba87f3c6dee4f240de0f1a0fbc790e3` | 2025-10-02 |
+
+The Chronos-2 repository was updated on 2026-06-05, after its release date (2025-10-31); we did not check whether the weights or only the model card changed. All runs (2026-11-25 onward) are later than that update, so they used this revision unless the repository changed again in the days between. To reproduce exactly, pass these commit hashes as the `revision` of the Hugging Face download. Take the environment from `pip freeze` on the machine that ran the experiments.
