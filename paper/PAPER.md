@@ -6,7 +6,7 @@ _Draft v0.2 of 2026-11-28. Source of truth for the numbers: `results/gap_fixed/`
 
 **Working title:** *Do time-series foundation models still beat classical forecasters on data they cannot have seen? A rolling-origin, release-date-aware evaluation.*
 
-Pretrained time-series foundation models (Chronos-Bolt, Chronos-2, TimesFM 2.5) keep a clear accuracy lead over classical forecasters when scored only on windows that start after their release dates, and we find no consistent sign that this lead is a leakage artefact. On 25 daily series (ECB exchange rates, Wikipedia pageviews, GB electricity demand) with rolling origins after 31 Oct 2025, the mean log-relative MASE against naive is −0.470 for TimesFM 2.5, −0.453 for Chronos-2 and −0.332 for Chronos-Bolt-small, against −0.036 for the best classical method (Theta); tuning ETS, Theta and ARIMA automatically does not close the gap. The lead comes entirely from electricity demand and Wikipedia pageviews: on the ten exchange-rate series no model, foundation or classical, is distinguishable from the random walk. To test for contamination we compare each model's skill before and after its own release date with a difference-in-differences gap measured against classical models. The contamination gap (Chronos models only; TimesFM is not yet included) has mean −0.077 for Chronos-2 and −0.161 for Chronos-Bolt-small (both 95% intervals include 0), and it stays at or below zero when we change the reference, treat the ten EUR pairs as one cluster, drop single series, or set aside calendar-event pages. Electricity demand is the one exception: the gap is positive for both models, driven by the hourly series (two electricity series in total), and we cannot yet explain it. Release dates are conservative stand-ins for undisclosed training cutoffs, so a null result bounds the leakage we can detect but does not rule it out. All code, data checksums and results are public.
+Pretrained time-series foundation models (Chronos-Bolt, Chronos-2, TimesFM 2.5) keep a clear accuracy lead over classical forecasters when scored only on windows that start after their release dates, and we find no consistent sign that this lead is a leakage artefact. On 25 daily series (ECB exchange rates, Wikipedia pageviews, GB electricity demand) with rolling origins after 31 Oct 2025, the mean log-relative MASE against naive is −0.470 for TimesFM 2.5, −0.453 for Chronos-2 and −0.332 for Chronos-Bolt-small, against −0.036 for the best classical method (Theta); tuning ETS, Theta and ARIMA automatically does not close the gap. The lead comes entirely from electricity demand and Wikipedia pageviews: on the ten exchange-rate series no model, foundation or classical, is distinguishable from the random walk. To test for contamination we compare each model's skill before and after its own release date with a difference-in-differences gap measured against classical models. The mean gap is negative for all three models (−0.097 to −0.226 over 26 series) and is not positive under any robustness check we ran, but it is driven by eight calendar-event Wikipedia pages whose gap is unstable across origin samples. On the other 18 series it is within ±0.04 with intervals that include zero. The one consistently positive case is hourly electricity demand (Chronos-2 and TimesFM 2.5), which is a single series and which we cannot yet explain. Release dates are conservative stand-ins for undisclosed training cutoffs, so a null result bounds the leakage we can detect but does not rule it out. All code, data checksums and results are public.
 
 ## 1 Introduction
 
@@ -107,58 +107,73 @@ On the ten exchange-rate series every model is within about 0.06 of naive, and C
 
 ### 5.2 The contamination gap (RQ2)
 
-There is no consistent leakage signature. Across 26 series the mean DiD is negative for both models and both intervals include zero. Electricity is the only group where the mean is positive for both.
+We ran the gap twice: once with up to 40 pre-release and 40 post-release origins per series for the two Chronos models (`results/gap_fixed/`, 2026-11-25), and once with 20 origins per period for all three models (`results/gap_blocks/`, laptop, 2026-11-28). A positive difference-in-differences (DiD) means the model lost more skill after its release than classical models did. Neither run shows a consistent leakage signature: no model has a positive mean DiD across the 26 series.
+
+Table 2. DiD, 20-origin run, 26 series, 95% interval bootstrapped over series.
 
 | Model | Group | Series | Mean DiD | 95% interval | Series with DiD > 0 |
 | --- | --- | --- | --- | --- | --- |
-| Chronos-2 | all | 26 | −0.077 | [−0.176, 0.020] | 7 |
-| Chronos-2 | exchange rates | 10 | −0.034 | [−0.056, −0.013] | 2 |
-| Chronos-2 | Wikipedia | 14 | −0.133 | [−0.300, 0.033] | 4 |
-| Chronos-2 | electricity | 2 | +0.097 | [−0.114, 0.308] | 1 |
-| Chronos-Bolt-small | all | 26 | −0.161 | [−0.347, 0.007] | 9 |
-| Chronos-Bolt-small | exchange rates | 10 | −0.012 | [−0.038, 0.011] | 4 |
-| Chronos-Bolt-small | Wikipedia | 14 | −0.309 | [−0.614, 0.009] | 3 |
-| Chronos-Bolt-small | electricity | 2 | +0.137 | [0.063, 0.211] | 2 |
+| Chronos-Bolt-small | all | 26 | −0.191 | [−0.457, 0.020] | 12 |
+| Chronos-Bolt-small | exchange rates | 10 | −0.028 | [−0.074, 0.019] | 4 |
+| Chronos-Bolt-small | Wikipedia | 14 | −0.341 | [−0.807, 0.063] | 7 |
+| Chronos-Bolt-small | electricity | 2 | +0.040 | [−0.014, 0.094] | 1 |
+| Chronos-2 | all | 26 | −0.226 | [−0.414, −0.049] | 7 |
+| Chronos-2 | exchange rates | 10 | −0.023 | [−0.052, 0.008] | 3 |
+| Chronos-2 | Wikipedia | 14 | −0.399 | [−0.722, −0.101] | 3 |
+| Chronos-2 | electricity | 2 | −0.024 | [−0.216, 0.168] | 1 |
+| TimesFM 2.5 | all | 26 | −0.097 | [−0.270, 0.050] | 8 |
+| TimesFM 2.5 | exchange rates | 10 | −0.018 | [−0.036, −0.001] | 3 |
+| TimesFM 2.5 | Wikipedia | 14 | −0.189 | [−0.473, 0.072] | 4 |
+| TimesFM 2.5 | electricity | 2 | +0.157 | [−0.015, 0.330] | 1 |
 
-A negative DiD means the model kept more of its skill after release than classical models did. Intervals are bootstrapped over series and are too narrow, because exchange-rate crosses and Wikipedia pages are correlated (Section 5.3).
+**The event pages are not stable.** The headline means are driven by the eight calendar-event Wikipedia pages (Christmas, Easter, Halloween, Thanksgiving, Wimbledon, Super Bowl, Ramadan, Eurovision), which have large effects of both signs. Across the two runs the per-series DiD for Chronos-2 correlates only 0.27 (Chronos-Bolt-small: 0.62), and individual pages change sign: Thanksgiving goes from +0.11 to −1.53 and Christmas from +0.63 to −0.72 when the origin sample is halved. On a yearly-seasonal page the result depends on where the sampled origins fall in the calendar, so we do not read anything into these eight pages. The mean over the other 18 series is more stable (Table 3).
 
-The hourly electricity series carries the positive result (DiD +0.31 for Chronos-2, +0.21 for Chronos-Bolt-small). With only two electricity series, we cannot tell a leakage effect from a change in demand patterns.
+Table 3. Mean DiD over the 18 series that are not calendar-event pages (10 exchange rates, 6 other Wikipedia pages, 2 electricity series).
+
+| Model | 40-origin run | 20-origin run |
+| --- | --- | --- |
+| Chronos-Bolt-small | −0.009 [−0.055, 0.037] | +0.018 [−0.037, 0.072] |
+| Chronos-2 | −0.038 [−0.083, 0.015] | −0.026 [−0.107, 0.071] |
+| TimesFM 2.5 | not run | +0.030 [−0.027, 0.100] |
+
+All five intervals include zero and the means are within ±0.04, so on these series we see no gap in either direction. The data do not exclude small positive effects.
+
+**Hourly electricity.** The hourly series has a positive DiD for Chronos-2 in both runs (+0.31 and +0.17) and for TimesFM 2.5 in the one run that includes it (+0.33); for Chronos-Bolt-small it is +0.21 and −0.01. It is one series, so we cannot separate leakage from a change in demand patterns (Section 6).
 
 ### 5.3 Robustness
 
-We test whether the null result depends on how the gap is computed. Each check changes one choice and leaves the rest as in Section 5.2. Files: `results/gap_fixed/robust_*.csv`, produced by `forecastclean robust`.
+Each check changes one choice and leaves the rest as in Section 5.2. Files: `results/gap_fixed/robust_*.csv` (40 origins, Chronos) and `results/gap_blocks/robust_*.csv` (20 origins, three models), produced by `forecastclean robust`.
 
-| Check | Chronos-2 | Chronos-Bolt-small |
-| --- | --- | --- |
-| Headline (median classical reference, 26 series) | −0.077 [−0.176, 0.020] | −0.161 [−0.347, 0.007] |
-| Reference = mean of classical models | −0.080 | −0.173 |
-| Reference = median without drift | −0.081 | −0.161 |
-| Reference = each single classical model | −0.054 to −0.097 | −0.129 to −0.214 |
-| Ten EUR pairs counted as one unit (17 units) | −0.100 [−0.251, 0.046] | −0.239 [−0.499, 0.021] |
-| Leave one series out (range) | −0.106 to −0.050 | −0.209 to −0.115 |
-| Eight calendar-event Wikipedia pages | −0.165 [−0.448, 0.142] | −0.502 [−0.955, 0.047] |
-| Six other Wikipedia pages | −0.091 [−0.161, −0.024] | −0.051 [−0.149, 0.051] |
+| Check (20-origin run) | Chronos-Bolt-small | Chronos-2 | TimesFM 2.5 |
+| --- | --- | --- | --- |
+| Headline (median classical reference, 26 series) | −0.191 | −0.226 | −0.097 |
+| Reference = mean of classical models | −0.181 | −0.203 | −0.095 |
+| Reference = each single classical model | −0.259 to −0.132 | −0.246 to −0.119 | −0.154 to −0.000 |
+| Ten EUR pairs counted as one unit (17 units) | −0.278 [−0.669, 0.051] | −0.333 [−0.602, −0.082] | −0.138 [−0.395, 0.089] |
+| Leave one series out (range) | −0.223 to −0.120 | −0.259 to −0.173 | −0.128 to −0.037 |
+| Eight event pages only | −0.662 [−1.334, −0.005] | −0.675 [−1.069, −0.255] | −0.381 [−0.843, 0.037] |
+| Six other Wikipedia pages | +0.087 [−0.052, 0.202] | −0.032 [−0.244, 0.245] | +0.067 [−0.066, 0.223] |
+| Window-level block bootstrap (blocks of 5 origins) | −0.191 [−0.220, −0.003] | −0.226 [−0.273, −0.030] | −0.097 [−0.199, 0.048] |
 
-No variant makes the mean positive. The most influential single series is the Christmas page, which has a large positive DiD, and removing it makes the means more negative. The event pages are very noisy, with large effects of both signs. On the six other Wikipedia pages Chronos-2 lost less skill after release, the opposite of leakage, although classical models getting worse after release would produce the same pattern.
-
-A window-level block bootstrap, which resamples forecast origins inside each series, is implemented and tested on synthetic data. It needs per-window errors that the earlier run did not save, so it is not yet run on real data.
+No variant makes a mean clearly positive. The event pages are the most influential series: removing Thanksgiving (Chronos-2, TimesFM) or Wimbledon (Chronos-Bolt-small) moves the mean toward zero. The six other Wikipedia pages are slightly positive for two models, but every interval includes zero. The window-level block bootstrap resamples forecast origins within each series; its intervals are narrower than the series-level ones, which is expected because it holds the set of series fixed, and it does not address the instability of the event pages described above.
 
 ## 6 Limitations
 
 The null result in Section 5.2 is weaker than it looks, for these reasons.
 
 - **Release dates are not training cutoffs.** A model's real cutoff is earlier than its release date, so some pre-release windows are already clean, and the rest are only possibly seen. Both effects make any measured gap a lower bound. A null result does not show that no contamination exists, and an earlier study argues that familiarity can survive a later hold-out (Moghadasi and Ghaderi 2026, to be verified).
-- **Intervals are too narrow.** The bootstrap resamples series as independent, but the EUR pairs share a currency and the Wikipedia pages share news cycles. Counting the EUR pairs as one unit widens the intervals but does not change the conclusion. The window-level bootstrap is not yet run on real data.
-- **Few series per group.** Electricity has two series, and its positive gap is unexplained. We cannot separate a leakage effect from a change in demand.
+- **Intervals are too narrow.** The bootstrap resamples series as independent, but the EUR pairs share a currency and the Wikipedia pages share news cycles. Counting the EUR pairs as one unit widens the intervals but does not change the conclusion. A window-level block bootstrap (Section 5.3) gives narrower intervals but does not fix this.
+- **Unstable event pages.** The per-series gap on the eight calendar-event Wikipedia pages changes a lot, and sometimes flips sign, when the sample of origins changes (Section 5.2). Origins placed to match calendar phase before and after release, or all available origins, would be needed to use these pages.
+- **Few series per group.** Electricity has two series, and its positive gap on the hourly series is unexplained. We cannot separate a leakage effect from a change in demand.
 - **Classical models are fixed.** ARIMA is a fixed (1,1,1) in most runs and was dropped from the RQ2 runs. Tuned AutoARIMA ran only on non-seasonal series, so the strongest classical competitor is missing on seasonal series.
-- **Two foundation-model families, contamination only for one.** RQ1 includes Chronos and TimesFM; the contamination gap (RQ2) has so far been run for Chronos only. We have not run Moirai. Domain familiarity is also not controlled: the public Chronos Datasets collection includes Wikipedia daily traffic, electricity and exchange-rate subsets, and the Chronos-2 card says its training data is a subset of that collection (the cards do not say which subsets). Scoring only windows after release removes overlap in time, but the models may still know these kinds of series.
+- **Two foundation-model families.** We run Chronos and TimesFM; we have not run Moirai. Domain familiarity is also not controlled: the public Chronos Datasets collection includes Wikipedia daily traffic, electricity and exchange-rate subsets, and the Chronos-2 card says its training data is a subset of that collection (the cards do not say which subsets). Scoring only windows after release removes overlap in time, but the models may still know these kinds of series.
 - **Point forecasts only.** We score MASE of the median forecast. CRPS and weighted quantile loss are not yet reported.
 - **Short sample.** Post-release windows cover about one year, so the clean-data result describes one period.
 - **Unchecked sources.** The data licences (FRED-MD, ECB, Wikimedia, NESO) are not yet confirmed.
 
 ## 7 Conclusion
 
-With identical context, per-model cutoffs and tuned baselines, Chronos-Bolt-small and Chronos-2 keep a clear lead over classical forecasters on data released after them, and we find no consistent sign that the lead comes from leakage. The lead is large (about 28% and 36% below naive MASE) against classical methods that barely beat naive. The leakage check cannot prove absence, because cutoffs are undisclosed and the evidence on electricity is open. We recommend that foundation-model comparisons report skill separately before and after each model's release, name their cutoff assumptions, and show how the answer changes when those assumptions change.
+With identical context, per-model cutoffs and tuned baselines, Chronos-Bolt-small, Chronos-2 and TimesFM 2.5 keep a clear lead over classical forecasters on data released after them, and we find no consistent sign that the lead comes from leakage for any of them (the mean difference-in-differences is not positive for any model, and on the 18 series that are not calendar-event pages it is within ±0.04 with intervals that include zero). The lead is large (about 28%, 36% and 37% below naive MASE) against classical methods that barely beat naive, but it comes entirely from electricity demand and Wikipedia pageviews; on exchange rates every method ties with the random walk. The leakage check cannot prove absence, because cutoffs are undisclosed and the evidence on electricity is open. We recommend that foundation-model comparisons report skill separately before and after each model's release, name their cutoff assumptions, and show how the answer changes when those assumptions change.
 
 ## 8 Reproducibility
 
@@ -171,11 +186,11 @@ This draft uses only results we have. These items would change or strengthen it;
 | Item | Why it matters | How |
 | --- | --- | --- |
 | ~~Save the RQ1 result files and report skill by data group~~ | Done 2026-11-28 (`results/chronos_post_tuned3/`, Table 1). | Claude |
-| Run the window-level block bootstrap on real windows | The current intervals treat series as independent. | Notebook cell 4e, about 1 hour on Colab |
 | Release dates: checked on 27 Nov 2026, done | The cutoff is the central assumption of RQ2. | Claude, then Faiqa checks |
 | Read the two key papers in full and fix Section 2 | Summaries so far are secondhand. | Faiqa, with supervisor |
-| Add TimesFM 2.5 to the contamination gap (RQ2) | RQ1 now has it; the gap run does not. | Gap re-run (notebook cell 4f, about 3× heavier), then `forecastclean robust` |
-| Explain or bound the electricity result | It is the only positive gap. | Claude: split by regime and season |
+| ~~Add TimesFM 2.5 and the block bootstrap to RQ2~~ | Done 2026-11-28 (`results/gap_blocks/`). | Claude |
+| Re-run the gap on event pages with all origins or calendar-matched origins | Their gap is unstable at 20–40 origins (Section 5.2). | Claude, laptop |
+| Explain or bound the electricity result | Hourly electricity is the one consistently positive gap. | Claude: split by regime and season |
 | Add probabilistic metrics (CRPS or weighted quantile loss) | Reviewers expect them. | Claude |
 | Confirm data licences | Needed before publication. | Faiqa |
 | Confirm the gap statement with the supervisor | The post-release idea is crowded. | Faiqa |
