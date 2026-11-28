@@ -24,6 +24,7 @@ def main(argv=None):
     g.add_argument("--max-origins", type=int, default=60); g.add_argument("--eval-start", default="2015-01-01")
     g.add_argument("--drop", nargs="*", help="skip slow classical models, e.g. --drop arima")
     g.add_argument("--match-days", type=int, default=None, help="calendar-matched design: score only origins within this many days before and after the release date (365 = one yearly cycle each side); use with a large --max-origins")
+    g.add_argument("--pre-end", default=None, help="end the pre-release period at this date instead of the release date (e.g. 2023-12-31, the documented end of a model's corpus); the pre-period then covers --match-days (default 365) days before it")
     g.add_argument("--tuned", action="store_true", help="add tuned baselines (needs statsforecast); the classical median then includes them")
     pr = sub.add_parser("prob", help="probabilistic accuracy: scaled CRPS + 80% coverage of foundation models vs empirical-quantile classical references")
     pr.add_argument("--data", default="data/raw"); pr.add_argument("--out", default="results/prob"); pr.add_argument("--only", nargs="*")

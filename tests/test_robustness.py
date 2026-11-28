@@ -104,3 +104,17 @@ def test_cluster_boot_has_no_nan_when_a_subset_contains_no_fx_series():
     s = pd.DataFrame({"chronos": "m", "series": [f"wiki_{k}" for k in "ABCDEF"], "did": [-0.4, -0.1, 0.2, -0.3, -0.6, 0.1]})
     out = rb.cluster_boot(s, n_boot=200)
     assert int(out.n_units.iloc[0]) == 6 and out.mean_did.notna().all() and out.ci_lo.notna().all()
+
+
+def test_pre_end_moves_the_pre_period_before_the_given_date():
+    import pandas as pd
+    from forecastclean.gap import gap_for_series
+    from forecastclean.models import naive
+    from forecastclean.synthetic import seasonal_series
+    ser = seasonal_series(n=1500, season=7, seed=4); ser.index = pd.date_range("2018-01-01", periods=len(ser), freq="D")
+    rel = ser.index[1100]; pre_end = ser.index[700]; cl = []
+    rows, info = gap_for_series(ser, 7, 7, "m", naive, rel.strftime("%Y-%m-%d"), max_origins=10_000, max_context=None, eval_start="2018-04-01",
+                                min_windows=3, collect=cl, match_days=200, pre_end=pre_end.strftime("%Y-%m-%d"))
+    assert rows is not None
+    import pandas as _p; c = _p.concat(cl); pre = ser.index[c[c.period == "pre"].origin.to_numpy()]
+    assert pre.max() + _p.Timedelta(days=6) <= pre_end and pre.min() >= pre_end - _p.Timedelta(days=200)

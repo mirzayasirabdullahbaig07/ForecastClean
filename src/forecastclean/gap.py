@@ -28,7 +28,7 @@ def _rel(res: pd.DataFrame) -> pd.Series:
 
 
 def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origins=60, max_context=1024,
-                   eval_start="2015-01-01", min_windows=5, drop=(), tuned=False, collect=None, match_days=None):
+                   eval_start="2015-01-01", min_windows=5, drop=(), tuned=False, collect=None, match_days=None, pre_end=None):
     """Return (rows, summary) or (None, reason). rows: one line per model x period."""
     fc = {k: v for k, v in BASELINES.items() if k not in drop}; fc[chronos_name] = chronos_fc   # drop: skip slow models
     if tuned:
@@ -43,8 +43,12 @@ def gap_for_series(ser, season, h, chronos_name, chronos_fc, release, max_origin
     pre_start, post_end = (eval_start, None)
     if match_days:
         pre_start = max(pd.Timestamp(eval_start), r - pd.Timedelta(days=match_days)); post_end = r + pd.Timedelta(days=match_days)
+    pre_stop = r
+    if pre_end:                                    # pre-period placed BEFORE a stated date (e.g. the end of a model's documented training corpus)
+        pre_stop = pd.Timestamp(pre_end)
+        pre_start = max(pd.Timestamp(eval_start), pre_stop - pd.Timedelta(days=match_days or 365))
     pre = evaluate(ser, fc, h=h, season=season, max_context=max_context, max_origins=max_origins, min_train=mt,
-                   eval_start=pre_start, eval_end=r)
+                   eval_start=pre_start, eval_end=pre_stop)
     post = evaluate(ser, fc, h=h, season=season, max_context=max_context, max_origins=max_origins, min_train=mt,
                     eval_start=r + pd.Timedelta(days=1), eval_end=post_end)
     n_pre = pre.origin.nunique() if len(pre) else 0; n_post = post.origin.nunique() if len(post) else 0
@@ -101,7 +105,7 @@ def run_gap(args) -> int:
             ser = df.set_index("date")["value"].astype(float); h = H_BY_FREQ[freq]
             rows, info = gap_for_series(ser, season, h, short, fcm, rel, args.max_origins, args.max_context, args.eval_start,
                                          drop=tuple(args.drop or ()), tuned=args.tuned, collect=(cl := []),
-                                         match_days=getattr(args, "match_days", None))
+                                         match_days=getattr(args, "match_days", None), pre_end=getattr(args, "pre_end", None))
             if rows is None:
                 print(f"   {n}: skipped ({info})"); continue
             rows.insert(0, "series", n); rows["h"] = h; allrows.append(rows)
