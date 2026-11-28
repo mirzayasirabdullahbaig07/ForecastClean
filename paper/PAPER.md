@@ -1,12 +1,12 @@
 # ForecastClean — Paper draft v0.1
 
-_Draft of 2026-11-27. Source of truth for the numbers: `results/gap_fixed/` (RQ2) and `results/chronos_post_tuned/RESULT_TABLE.md` (RQ1). Citations marked "to be verified" were checked at summary level only; read them in full before submission._
+_Draft v0.2 of 2026-11-28. Source of truth for the numbers: `results/gap_fixed/` (RQ2) and `results/chronos_post_tuned3/` (RQ1). Citations marked "to be verified" were checked at summary level only; read them in full before submission._
 
 ## Abstract
 
 **Working title:** *Do time-series foundation models still beat classical forecasters on data they cannot have seen? A rolling-origin, release-date-aware evaluation.*
 
-Pretrained time-series foundation models (Chronos-Bolt, Chronos-2) keep a clear accuracy lead over classical forecasters when scored only on windows that start after their release dates, and we find no consistent sign that this lead is a leakage artefact. On 25 daily series (ECB exchange rates, Wikipedia pageviews, GB electricity demand) with rolling origins after 31 Oct 2025, the mean log-relative MASE against naive is −0.453 for Chronos-2 and −0.332 for Chronos-Bolt-small, against −0.036 for the best classical method (Theta); tuning ETS, Theta and ARIMA automatically does not close the gap. To test for contamination we compare each model's skill before and after its own release date with a difference-in-differences gap measured against classical models. The mean gap is −0.077 for Chronos-2 and −0.161 for Chronos-Bolt-small (both 95% intervals include 0), and it stays at or below zero when we change the reference, treat the ten EUR pairs as one cluster, drop single series, or set aside calendar-event pages. Electricity demand is the one exception: the gap is positive for both models, driven by the hourly series (two electricity series in total), and we cannot yet explain it. Release dates are conservative stand-ins for undisclosed training cutoffs, so a null result bounds the leakage we can detect but does not rule it out. All code, data checksums and results are public.
+Pretrained time-series foundation models (Chronos-Bolt, Chronos-2, TimesFM 2.5) keep a clear accuracy lead over classical forecasters when scored only on windows that start after their release dates, and we find no consistent sign that this lead is a leakage artefact. On 25 daily series (ECB exchange rates, Wikipedia pageviews, GB electricity demand) with rolling origins after 31 Oct 2025, the mean log-relative MASE against naive is −0.470 for TimesFM 2.5, −0.453 for Chronos-2 and −0.332 for Chronos-Bolt-small, against −0.036 for the best classical method (Theta); tuning ETS, Theta and ARIMA automatically does not close the gap. The lead comes entirely from electricity demand and Wikipedia pageviews: on the ten exchange-rate series no model, foundation or classical, is distinguishable from the random walk. To test for contamination we compare each model's skill before and after its own release date with a difference-in-differences gap measured against classical models. The contamination gap (Chronos models only; TimesFM is not yet included) has mean −0.077 for Chronos-2 and −0.161 for Chronos-Bolt-small (both 95% intervals include 0), and it stays at or below zero when we change the reference, treat the ten EUR pairs as one cluster, drop single series, or set aside calendar-event pages. Electricity demand is the one exception: the gap is positive for both models, driven by the hourly series (two electricity series in total), and we cannot yet explain it. Release dates are conservative stand-ins for undisclosed training cutoffs, so a null result bounds the leakage we can detect but does not rule it out. All code, data checksums and results are public.
 
 ## 1 Introduction
 
@@ -86,17 +86,24 @@ The event pages were fixed in code before any per-page results were examined.
 
 ### 5.1 Skill on clean data (RQ1)
 
-On 25 series and windows that start after 31 Oct 2025, both Chronos models beat every classical method, tuned or not. Chronos-2 scores −0.453 and Chronos-Bolt-small −0.332 in mean log-relative MASE against naive, which is about 36% and 28% lower error. The best classical methods score −0.036 (Theta) and −0.035 (AutoTheta), and AutoETS scores −0.006, close to naive.
-
-Tuning therefore does not change the picture: AutoTheta is no better than untuned Theta, and AutoETS is only slightly better than untuned ETS (+0.018), which is itself slightly worse than naive.
+On 25 series and windows that start after 31 Oct 2025, all three foundation models beat every classical method, tuned or not. Mean log-relative MASE against naive is −0.470 for TimesFM 2.5, −0.453 for Chronos-2 and −0.332 for Chronos-Bolt-small, which is about 37%, 36% and 28% lower error. The best classical methods score −0.036 (Theta) and −0.035 (AutoTheta), about 4% below naive, and AutoETS scores −0.006. Tuning does not change the picture: AutoTheta is no better than untuned Theta, and AutoETS is only slightly better than untuned ETS.
 
 ![Figure 1](figures/fig1_rq1_skill.png)
 
-*Figure 1. Colab run at commit e7dc9ee; values transcribed from the printed table (result files not yet saved). AutoARIMA not ranked. Regenerate with `python paper/make_fig1.py`.*
+*Figure 1. Mean log-relative MASE vs naive, 25 series, laptop run of 2026-11-28 (`results/chronos_post_tuned3/`). AutoARIMA not ranked. Regenerate with `python paper/make_fig1.py`.*
 
-The ranking is stable. Across resamples of origins and series the best model stays the best in every one (probability 1.00), and the mean Kendall tau between resampled rankings is 0.73. The tuned AutoARIMA ran only on the exchange-rate series, so it is left out of this ranking.
+TimesFM 2.5 and Chronos-2 are close (−0.470 vs −0.453), and we do not claim one is better. The ranking is moderately stable: across resamples of origins and series the best model stays the best with probability 0.69, and the mean Kendall tau between resampled rankings is 0.77. This is lower than in the Chronos-only run, which is what one expects when two models are nearly tied at the top.
 
-Two limits apply. Each series contributes one horizon, and ten of the 25 series are EUR pairs that share a currency, so the effective number of independent series is smaller than 25. We also have not yet broken the result down by data group, which matters because an earlier study found every method tied on exchange rates (Moghadasi and Ghaderi 2026, to be verified).
+**The lead depends on the data group.** Table 1 gives mean log-relative MASE by group (`skill_by_group.csv`).
+
+| Group (series) | TimesFM 2.5 | Chronos-2 | Chronos-Bolt-small | Theta | Comb | Seasonal naive |
+|---|---:|---:|---:|---:|---:|---:|
+| ECB exchange rates (10) | −0.007 | −0.013 | +0.055 | +0.007 | +0.001 | 0.000 |
+| GB electricity demand, daily (1) | −0.624 | −0.618 | −0.432 | −0.170 | −0.217 | −0.195 |
+| Wikipedia, calendar-event pages (8) | −1.080 | −1.028 | −0.774 | −0.001 | +0.029 | −0.070 |
+| Wikipedia, other pages (6) | −0.403 | −0.391 | −0.371 | −0.131 | −0.136 | +0.026 |
+
+On the ten exchange-rate series every model is within about 0.06 of naive, and Chronos-Bolt-small is slightly worse than naive. This matches an earlier finding that methods tie on exchange rates (Moghadasi and Ghaderi 2026, to be verified). The headline gain therefore comes from the 15 non-FX series, and the largest gains are on pages with strong yearly or weekly calendar structure (Halloween, Thanksgiving, Christmas), which is where a model that has seen many similar series should help most. The ten EUR pairs also share a currency, so the effective number of independent series is smaller than 25, and electricity is a single series.
 
 ### 5.2 The contamination gap (RQ2)
 
@@ -144,7 +151,7 @@ The null result in Section 5.2 is weaker than it looks, for these reasons.
 - **Intervals are too narrow.** The bootstrap resamples series as independent, but the EUR pairs share a currency and the Wikipedia pages share news cycles. Counting the EUR pairs as one unit widens the intervals but does not change the conclusion. The window-level bootstrap is not yet run on real data.
 - **Few series per group.** Electricity has two series, and its positive gap is unexplained. We cannot separate a leakage effect from a change in demand.
 - **Classical models are fixed.** ARIMA is a fixed (1,1,1) in most runs and was dropped from the RQ2 runs. Tuned AutoARIMA ran only on non-seasonal series, so the strongest classical competitor is missing on seasonal series.
-- **One foundation-model family.** Both models are Chronos. We have not run TimesFM or Moirai, so the result may not transfer. Domain familiarity is also not controlled: the public Chronos Datasets collection includes Wikipedia daily traffic, electricity and exchange-rate subsets, and the Chronos-2 card says its training data is a subset of that collection (the cards do not say which subsets). Scoring only windows after release removes overlap in time, but the models may still know these kinds of series.
+- **Two foundation-model families, contamination only for one.** RQ1 includes Chronos and TimesFM; the contamination gap (RQ2) has so far been run for Chronos only. We have not run Moirai. Domain familiarity is also not controlled: the public Chronos Datasets collection includes Wikipedia daily traffic, electricity and exchange-rate subsets, and the Chronos-2 card says its training data is a subset of that collection (the cards do not say which subsets). Scoring only windows after release removes overlap in time, but the models may still know these kinds of series.
 - **Point forecasts only.** We score MASE of the median forecast. CRPS and weighted quantile loss are not yet reported.
 - **Short sample.** Post-release windows cover about one year, so the clean-data result describes one period.
 - **Unchecked sources.** The data licences (FRED-MD, ECB, Wikimedia, NESO) are not yet confirmed.
@@ -155,7 +162,7 @@ With identical context, per-model cutoffs and tuned baselines, Chronos-Bolt-smal
 
 ## 8 Reproducibility
 
-Code, tests and result files are in the public repository `mirzayasirabdullahbaig07/ForecastClean`. Each run records its command, commit and data checksums (`results/gap_fixed/RUN_INFO.md`, `MANIFEST_colab_2026-11-25.csv`). Raw data is downloaded by `forecastclean download` and is not redistributed. The RQ2 tables come from `forecastclean gap` and `forecastclean robust`; the RQ1 table is printed by `forecastclean batch --tuned` and is transcribed in `results/chronos_post_tuned/RESULT_TABLE.md` until the result CSVs are saved.
+Code, tests and result files are in the public repository `mirzayasirabdullahbaig07/ForecastClean`. Each run records its command, commit and data checksums (`results/gap_fixed/RUN_INFO.md`, `MANIFEST_colab_2026-11-25.csv`). Raw data is downloaded by `forecastclean download` and is not redistributed. The RQ2 tables come from `forecastclean gap` and `forecastclean robust`; the RQ1 results are in `results/chronos_post_tuned3/` (command in its `RESULT_TABLE.md`).
 
 ## Open items before submission
 
@@ -163,11 +170,11 @@ This draft uses only results we have. These items would change or strengthen it;
 
 | Item | Why it matters | How |
 | --- | --- | --- |
-| Save the RQ1 result files and report skill by data group | Only the printed table exists. Prior work found methods tied on exchange rates, so the group split is needed. | Re-run or zip the Colab output (Faiqa), then Claude |
+| ~~Save the RQ1 result files and report skill by data group~~ | Done 2026-11-28 (`results/chronos_post_tuned3/`, Table 1). | Claude |
 | Run the window-level block bootstrap on real windows | The current intervals treat series as independent. | Notebook cell 4e, about 1 hour on Colab |
 | Release dates: checked on 27 Nov 2026, done | The cutoff is the central assumption of RQ2. | Claude, then Faiqa checks |
 | Read the two key papers in full and fix Section 2 | Summaries so far are secondhand. | Faiqa, with supervisor |
-| Add a second model family (TimesFM 2.5) | One family limits the claim. | Claude adapter, Colab run |
+| Add TimesFM 2.5 to the contamination gap (RQ2) | RQ1 now has it; the gap run does not. | Gap re-run (notebook cell 4f, about 3× heavier), then `forecastclean robust` |
 | Explain or bound the electricity result | It is the only positive gap. | Claude: split by regime and season |
 | Add probabilistic metrics (CRPS or weighted quantile loss) | Reviewers expect them. | Claude |
 | Confirm data licences | Needed before publication. | Faiqa |

@@ -7,4 +7,5 @@ results/*
 data/raw/
 !results/gap_fixed/
 !results/chronos_post_tuned/
+!results/chronos_post_tuned3/
 *.zip

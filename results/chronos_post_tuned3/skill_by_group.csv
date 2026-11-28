@@ -1,0 +1,5 @@
+group,arima,auto_arima,auto_ets,auto_theta,chronos-2,chronos-bolt-small,comb,drift,ets,naive,seasonal_naive,theta,timesfm-2.5-200m-pytorch
+ECB FX (10),-0.001,0.005,0.0,0.008,-0.013,0.055,0.001,0.017,-0.001,0.0,0.0,0.007,-0.007
+Electricity daily (1),-0.128,,-0.177,-0.17,-0.618,-0.432,-0.217,0.008,-0.172,0.0,-0.195,-0.17,-0.624
+Wikipedia event pages (8),0.041,,0.054,0.001,-1.028,-0.774,0.029,0.011,0.139,0.0,-0.07,-0.001,-1.08
+Wikipedia other (6),-0.033,,-0.067,-0.13,-0.391,-0.371,-0.136,0.005,-0.082,0.0,0.026,-0.131,-0.403
